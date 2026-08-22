@@ -15,6 +15,7 @@
     .checkbox-group { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
     label { font-size: 0.9rem; color: var(--text-muted); font-weight: 600; }
     input, select { background: #0b111e; border: 1px solid var(--card-border); padding: 10px; border-radius: 6px; color: #fff; font-size: 0.95rem; width: 100%; }
+    input[type="file"] { padding: 8px; cursor: pointer; }
     input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
     button { background: var(--accent-blue); color: #fff; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; font-size: 1rem; }
     .btn-verify { background: #1e293b; border: 1px solid var(--card-border); color: #3b82f6; padding: 8px; margin-top: 4px; font-size: 0.85rem; }
@@ -63,13 +64,13 @@
       </div>
 
       <div class="form-group">
-        <label>Link da Showcase / Vídeo (Qualquer plataforma)</label>
+        <label>Link da Showcase / Vídeo</label>
         <input type="text" id="videoUrl" required placeholder="Cole o link do vídeo de prova aqui">
       </div>
 
       <div class="form-group">
-        <label>URL da Thumbnail / Imagem</label>
-        <input type="url" id="thumbnailUrl" required placeholder="https://exemplo.com/imagem.png">
+        <label>Arquivo da Thumbnail / Imagem</label>
+        <input type="file" id="thumbnailFile" accept="image/*" required>
       </div>
 
       <div class="checkbox-group">
@@ -97,6 +98,7 @@
       const nongInput = document.getElementById('nongName');
 
       nongGroup.style.display = checked ? 'flex' : 'none';
+      
       if (checked) {
         nongInput.setAttribute('required', 'required');
       } else {
@@ -105,7 +107,6 @@
       }
     }
 
-    // Validação com GD Browser API
     document.getElementById('btnCheckGd').addEventListener('click', async () => {
       const gdId = document.getElementById('gdId').value.trim();
       const statusDiv = document.getElementById('gdStatus');
@@ -121,15 +122,15 @@
 
       try {
         const response = await fetch(`https://gdbrowser.com/api/level/${gdId}`);
-        if (!response.ok) throw new Error("Nível não encontrado!");
+        if (!response.ok) throw new Error("Nível não encontrado no GD!");
 
         const data = await response.json();
 
         document.getElementById('levelName').value = data.name;
         document.getElementById('levelCreator').value = data.author;
 
-        statusDiv.className = "api-status api-success";
-        statusDiv.textContent = `✓ Encontrado: "${data.name}" por ${data.author}`;
+        statusDiv.className = "api-success api-status";
+        statusDiv.textContent = `✓ Nível encontrado: "${data.name}" por ${data.author}`;
       } catch (err) {
         statusDiv.className = "api-status api-error";
         statusDiv.textContent = "✗ ID não encontrado no Geometry Dash.";
@@ -152,43 +153,61 @@
       const verifier = document.getElementById('levelVerifier').value.trim();
       const listType = document.getElementById('listType').value;
       const videoUrl = document.getElementById('videoUrl').value.trim();
-      const thumbnailUrl = document.getElementById('thumbnailUrl').value.trim();
+      const thumbnailFileInput = document.getElementById('thumbnailFile');
       const hasNong = document.getElementById('hasNong').checked;
       const nongName = document.getElementById('nongName').value.trim();
       const btn = document.getElementById('btnSubmit');
 
-      if (hasNong && !nongName) {
-        alert("Informe o nome da música NONG!");
+      const file = thumbnailFileInput.files[0];
+      if (!file) {
+        alert("Por favor, selecione uma imagem para a thumbnail.");
         return;
       }
 
-      btn.textContent = "Enviando...";
+      btn.textContent = "Enviando imagem e dados...";
       btn.disabled = true;
 
-      const { error } = await supabaseClient.from('levels').insert({
-        gd_id: gdId,
-        name: name,
-        creator: creator,
-        verifier: verifier,
-        list_type: listType,
-        video_url: videoUrl,
-        thumbnail_url: thumbnailUrl,
-        has_nong: hasNong,
-        nong_name: hasNong ? nongName : null,
-        submitted_by: session.user.id
-      });
+      try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `level_thumbnails/${fileName}`;
 
-      if (error) {
-        alert("Erro ao enviar nível: " + error.message);
-      } else {
+        const { error: uploadError } = await supabaseClient.storage
+          .from('thumbnails')
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabaseClient.storage
+          .from('thumbnails')
+          .getPublicUrl(filePath);
+
+        const { error: dbError } = await supabaseClient.from('levels').insert({
+          gd_id: gdId,
+          name: name,
+          creator: creator,
+          verifier: verifier,
+          list_type: listType,
+          video_url: videoUrl,
+          thumbnail_url: publicUrl,
+          has_nong: hasNong,
+          nong_name: hasNong ? nongName : null,
+          submitted_by: session.user.id
+        });
+
+        if (dbError) throw dbError;
+
         alert("Nível enviado com sucesso! Aguarde a verificação dos moderadores.");
         this.reset();
         document.getElementById('gdStatus').textContent = "";
         toggleNongInput();
-      }
 
-      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Enviar Nível';
-      btn.disabled = false;
+      } catch (err) {
+        alert("Erro no envio: " + err.message);
+      } finally {
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Enviar Nível';
+        btn.disabled = false;
+      }
     });
   </script>
 </body>
