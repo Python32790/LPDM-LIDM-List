@@ -50,15 +50,15 @@
       </div>
 
       <div class="form-group">
-        <label>Verificador (Deixe em branco para '???')</label>
-        <input type="text" id="levelVerifier" placeholder="Ex: Knobbelboy">
+        <label>Verificador</label>
+        <input type="text" id="levelVerifier" required placeholder="Ex: Knobbelboy ou ???">
       </div>
 
       <div class="form-group">
         <label>Lista Destino</label>
         <select id="listType" required>
-          <option value="LPDM">LPDM ( Demon List )</option>
-          <option value="LIDM">LIDM ( Impossible Demon List )</option>
+          <option value="LPDM">LPDM ( Levels Possíveis Dedicados ao Meow )</option>
+          <option value="LIDM">LIDM ( Levels Impossíveis Dedicados ao Meow )</option>
         </select>
       </div>
 
@@ -68,8 +68,8 @@
       </div>
 
       <div class="form-group">
-        <label>URL da Thumbnail / Imagem (Opcional)</label>
-        <input type="url" id="thumbnailUrl" placeholder="https://exemplo.com/imagem.png">
+        <label>URL da Thumbnail / Imagem</label>
+        <input type="url" id="thumbnailUrl" required placeholder="https://exemplo.com/imagem.png">
       </div>
 
       <div class="checkbox-group">
@@ -91,11 +91,18 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcHN5emRvaGhwcnhvcmF1ZGFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjQ3NjEsImV4cCI6MjEwMzAwMDc2MX0.1uQOWMpovDiDFUIYbJ-1bovwc7OjGd4PauCm5U34dlE";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let isGdValidated = false;
-
     function toggleNongInput() {
       const checked = document.getElementById('hasNong').checked;
-      document.getElementById('nongGroup').style.display = checked ? 'flex' : 'none';
+      const nongGroup = document.getElementById('nongGroup');
+      const nongInput = document.getElementById('nongName');
+
+      nongGroup.style.display = checked ? 'flex' : 'none';
+      if (checked) {
+        nongInput.setAttribute('required', 'required');
+      } else {
+        nongInput.removeAttribute('required');
+        nongInput.value = '';
+      }
     }
 
     // Validação com GD Browser API
@@ -114,21 +121,18 @@
 
       try {
         const response = await fetch(`https://gdbrowser.com/api/level/${gdId}`);
-        if (!response.ok) throw new Error("Nível não encontrado no GD!");
+        if (!response.ok) throw new Error("Nível não encontrado!");
 
         const data = await response.json();
 
-        // Autopreencher ou validar nome e criador
         document.getElementById('levelName').value = data.name;
         document.getElementById('levelCreator').value = data.author;
 
         statusDiv.className = "api-status api-success";
-        statusDiv.textContent = `✓ Nível encontrado: "${data.name}" por ${data.author}`;
-        isGdValidated = true;
+        statusDiv.textContent = `✓ Encontrado: "${data.name}" por ${data.author}`;
       } catch (err) {
         statusDiv.className = "api-status api-error";
         statusDiv.textContent = "✗ ID não encontrado no Geometry Dash.";
-        isGdValidated = false;
       }
     });
 
@@ -145,7 +149,7 @@
       const gdId = document.getElementById('gdId').value.trim();
       const name = document.getElementById('levelName').value.trim();
       const creator = document.getElementById('levelCreator').value.trim();
-      let verifier = document.getElementById('levelVerifier').value.trim();
+      const verifier = document.getElementById('levelVerifier').value.trim();
       const listType = document.getElementById('listType').value;
       const videoUrl = document.getElementById('videoUrl').value.trim();
       const thumbnailUrl = document.getElementById('thumbnailUrl').value.trim();
@@ -153,7 +157,10 @@
       const nongName = document.getElementById('nongName').value.trim();
       const btn = document.getElementById('btnSubmit');
 
-      if (!verifier) verifier = '???';
+      if (hasNong && !nongName) {
+        alert("Informe o nome da música NONG!");
+        return;
+      }
 
       btn.textContent = "Enviando...";
       btn.disabled = true;
@@ -165,7 +172,7 @@
         verifier: verifier,
         list_type: listType,
         video_url: videoUrl,
-        thumbnail_url: thumbnailUrl || null,
+        thumbnail_url: thumbnailUrl,
         has_nong: hasNong,
         nong_name: hasNong ? nongName : null,
         submitted_by: session.user.id
