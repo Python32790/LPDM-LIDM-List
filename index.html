@@ -5,10 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LPDM/LIDM List - Início</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- SDK Oficial do Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <style>
     :root {
       --bg-color: #0b111e;
@@ -43,6 +40,7 @@
     .btn-primary { background-color: var(--accent-blue); color: #fff; }
     .btn-secondary { background-color: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-main); }
     .btn-tertiary { background-color: #1e293b; color: #fff; border: 1px solid var(--card-border); }
+    .btn-mod { background-color: #8b5cf6; color: #fff; }
     .user-profile { display: flex; align-items: center; gap: 10px; }
     .btn-logout { background: transparent; border: 1px solid var(--card-border); color: var(--danger-red); padding: 10px 14px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: bold; }
   </style>
@@ -58,59 +56,56 @@
   <section class="hero-section">
     <div class="hero-container">
       <h1 class="hero-title">LPDM/LIDM LIST</h1>
-      <p class="hero-subtitle">The most complete and trusted ranking of the hardest Geometry Dash demons, maintained by a dedicated community.</p>
+      <p class="hero-subtitle"> O ranking oficial dos níveis mais difíceis da comunidade Geometry Dash.</p>
       
       <div class="hero-actions">
         <a href="LevelsList.html" class="btn btn-primary">Entrar Na Lista <i class="fa-solid fa-arrow-right"></i></a>
         
-        <!-- Botão de Cadastro/Login quando DESLOGADO -->
         <a href="CadastroLogin.html" class="btn btn-secondary" id="authBtn">Cadastrar/Login</a>
 
-        <!-- Perfil do Usuário exibido quando LOGADO -->
         <div class="user-profile" id="userProfile" style="display: none;">
           <span class="btn btn-secondary" id="userNameLabel"><i class="fa-solid fa-user"></i> ...</span>
           <button class="btn-logout" id="btnLogout"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
         </div>
 
         <a href="EnviarLevel.html" class="btn btn-tertiary">Enviar Um Nível <i class="fa-solid fa-plus"></i></a>
+        <a href="AprovarLevels.html" class="btn btn-mod" id="modPanelBtn" style="display: none;"><i class="fa-solid fa-shield-halved"></i> Painel Mod</a>
       </div>
     </div>
   </section>
 
   <script>
-    // Configurações do Supabase
     const SUPABASE_URL = "https://cspsyzdohhprxoraudap.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcHN5emRvaGhwcnhvcmF1ZGFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjQ3NjEsImV4cCI6MjEwMzAwMDc2MX0.1uQOWMpovDiDFUIYbJ-1bovwc7OjGd4PauCm5U34dlE";
-    
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const authBtn = document.getElementById('authBtn');
-    const userProfile = document.getElementById('userProfile');
-    const userNameLabel = document.getElementById('userNameLabel');
-    const btnLogout = document.getElementById('btnLogout');
-
-    // Verifica a sessão do usuário no banco
     async function loadUserSession() {
       const { data: { session } } = await supabaseClient.auth.getSession();
 
       if (session) {
         const username = session.user.user_metadata.username || session.user.email;
-        userNameLabel.innerHTML = `<i class="fa-solid fa-user"></i> ${username}`;
-        authBtn.style.display = 'none';
-        userProfile.style.display = 'flex';
-      } else {
-        authBtn.style.display = 'inline-flex';
-        userProfile.style.display = 'none';
+        document.getElementById('userNameLabel').innerHTML = `<i class="fa-solid fa-user"></i> ${username}`;
+        document.getElementById('authBtn').style.display = 'none';
+        document.getElementById('userProfile').style.display = 'flex';
+
+        // Checar se é MOD ou ADMIN para exibir o botão do painel
+        const { data: profile } = await supabaseClient
+          .from('profiles')
+          .select('role')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profile && (profile.role === 'mod' || profile.role === 'admin')) {
+          document.getElementById('modPanelBtn').style.display = 'inline-flex';
+        }
       }
     }
 
-    // Botão de deslogar
-    btnLogout.addEventListener('click', async () => {
+    document.getElementById('btnLogout').addEventListener('click', async () => {
       await supabaseClient.auth.signOut();
       window.location.reload();
     });
 
-    // Alternar tema claro/escuro
     document.getElementById('themeToggle').addEventListener('click', () => {
       document.body.classList.toggle('light-mode');
     });
