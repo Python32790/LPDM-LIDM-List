@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LPDM/LIDM List - Enviar Level</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-color: #0b111e;
+      --card-bg: #131c2e;
+      --card-border: #1d2b45;
+      --text-main: #e2e8f0;
+      --text-muted: #8493a8;
+      --accent-blue: #3b82f6;
+      --input-bg: #0b111e;
+    }
+    body.light-mode {
+      --bg-color: #f1f5f9;
+      --card-bg: #ffffff;
+      --card-border: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --accent-blue: #2563eb;
+      --input-bg: #f8fafc;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
+    .navbar { width: 100%; background-color: var(--card-bg); border-bottom: 1px solid var(--card-border); padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
+    .nav-brand { display: flex; align-items: center; gap: 10px; font-weight: bold; text-decoration: none; color: var(--text-main); }
+    .icon-btn { background: transparent; border: none; color: var(--text-muted); font-size: 1.1rem; cursor: pointer; }
+    .content-area { flex: 1; display: flex; justify-content: center; align-items: center; padding: 40px 20px; }
+    .page-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; width: 100%; max-width: 480px; padding: 28px; }
+    .btn-back { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); text-decoration: none; font-size: 0.85rem; margin-bottom: 16px; }
+    .required-notice { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; }
+    .page-form { display: flex; flex-direction: column; gap: 14px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 0.85rem; font-weight: 600; }
+    .form-group input, .form-group select { background-color: var(--input-bg); border: 1px solid var(--card-border); border-radius: 6px; padding: 10px; color: var(--text-main); outline: none; }
+    .form-group input[type="file"] { padding: 8px; cursor: pointer; }
+    .btn-submit { background-color: var(--accent-blue); color: #fff; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <a href="index.html" class="nav-brand"><i class="fa-solid fa-globe"></i> LPDM/LIDM LIST</a>
+    <button class="icon-btn" id="themeToggle"><i class="fa-solid fa-sun"></i></button>
+  </header>
+
+  <div class="content-area">
+    <div class="page-card">
+      <a href="index.html" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Voltar</a>
+      <h2>Envie Seu Level</h2>
+      <p class="required-notice">(* Indica Um Lugar Obrigatório)</p>
+
+      <form class="page-form" id="levelForm">
+        <div class="form-group">
+          <label>Enviar Para Qual Lista?*</label>
+          <select id="targetList" required>
+            <option value="LPDM">LPDM List</option>
+            <option value="LIDM">LIDM List</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Insira O Nome Do Seu Level*:</label>
+          <input type="text" id="levelName" placeholder="Insira Nome Aqui" required>
+        </div>
+
+        <div class="form-group">
+          <label>Insira O ID Do Seu Level*:</label>
+          <input type="text" id="levelId" placeholder="Insira O ID Aqui" required>
+        </div>
+
+        <div class="form-group">
+          <label>Insira A Showcase*:</label>
+          <input type="url" placeholder="Insira O Link Da Showcase Aqui" required>
+        </div>
+
+        <div class="form-group">
+          <label>Selecione A Thumbnail Do Seu Level*:</label>
+          <input type="file" id="thumbFile" accept="image/*" required>
+        </div>
+
+        <div class="form-group">
+          <label>Insira O Creator Aqui*:</label>
+          <input type="text" id="creatorName" placeholder="Nome Do Criador Do Seu Level" required>
+        </div>
+
+        <div class="form-group">
+          <label>Insira O Verificador Aqui (Coloque ??? Se Não Houver)*:</label>
+          <input type="text" id="verifierName" placeholder="Ex: wPopoff ou ???" required>
+        </div>
+
+        <div class="form-group">
+          <label>Seu Level Usa Uma Nong?*</label>
+          <select id="hasNong" required>
+            <option value="nao">Não</option>
+            <option value="sim">Sim</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="nongGroup" style="display: none;">
+          <label>Se Sim, Insira Aqui:</label>
+          <input type="text" placeholder="Insira Nome Da Nong Aqui">
+        </div>
+
+        <button type="submit" class="btn-submit" id="btnSubmit">Enviar Level</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    const hasNongSelect = document.getElementById('hasNong');
+    const nongGroup = document.getElementById('nongGroup');
+
+    hasNongSelect.addEventListener('change', (e) => {
+      if (e.target.value === 'sim') {
+        nongGroup.style.display = 'flex';
+      } else {
+        nongGroup.style.display = 'none';
+      }
+    });
+
+    document.getElementById('levelForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const targetList = document.getElementById('targetList').value;
+      const levelNameInput = document.getElementById('levelName').value.trim();
+      const levelIdInput = document.getElementById('levelId').value.trim();
+      const creatorNameInput = document.getElementById('creatorName').value.trim();
+      let verifierInput = document.getElementById('verifierName').value.trim();
+      const btnSubmit = document.getElementById('btnSubmit');
+
+      if (!verifierInput) {
+        verifierInput = "???";
+      }
+
+      btnSubmit.textContent = "Verificando...";
+      btnSubmit.disabled = true;
+
+      try {
+        const response = await fetch(`https://gdbrowser.com/api/level/${levelIdInput}`);
+
+        if (!response.ok) throw new Error("Level não encontrado.");
+
+        const levelData = await response.json();
+
+        if (levelData.name.toLowerCase() !== levelNameInput.toLowerCase()) {
+          alert(`O nome do level ("${levelNameInput}") não coincide com o cadastrado no GD ("${levelData.name}").`);
+          resetButton();
+          return;
+        }
+
+        if (levelData.author.toLowerCase() !== creatorNameInput.toLowerCase()) {
+          alert(`O criador ("${creatorNameInput}") não coincide com o autor no GD ("${levelData.author}").`);
+          resetButton();
+          return;
+        }
+
+        alert(`Level "${levelData.name}" verificado com sucesso para a ${targetList} List!\nCriador: ${creatorNameInput}\nVerificador: ${verifierInput}`);
+        window.location.href = "LevelsList.html";
+
+      } catch (error) {
+        alert("Erro ao verificar o ID do level no Geometry Dash.");
+        resetButton();
+      }
+    });
+
+    function resetButton() {
+      const btnSubmit = document.getElementById('btnSubmit');
+      btnSubmit.textContent = "Enviar Level";
+      btnSubmit.disabled = false;
+    }
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light-mode');
+    });
+  </script>
+</body>
+</html>

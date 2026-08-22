@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LPDM/LIDM List - Lista de Levels</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg-color: #0b111e;
+      --card-bg: #131c2e;
+      --card-border: #1d2b45;
+      --text-main: #e2e8f0;
+      --text-muted: #8493a8;
+      --accent-blue: #3b82f6;
+    }
+    body.light-mode {
+      --bg-color: #f1f5f9;
+      --card-bg: #ffffff;
+      --card-border: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --accent-blue: #2563eb;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-main); padding-bottom: 40px; display: flex; flex-direction: column; align-items: center; }
+    .navbar { width: 100%; background-color: var(--card-bg); border-bottom: 1px solid var(--card-border); padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+    .nav-brand { display: flex; align-items: center; gap: 10px; font-weight: bold; text-decoration: none; color: var(--text-main); }
+    .icon-btn { background: transparent; border: none; color: var(--text-muted); font-size: 1.1rem; cursor: pointer; }
+    .container { width: 100%; max-width: 800px; padding: 0 20px; }
+    .btn-back { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); text-decoration: none; font-size: 0.85rem; margin-bottom: 20px; }
+    .list-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+    .tab-btn { flex: 1; padding: 12px; background-color: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-muted); font-weight: bold; border-radius: 8px; cursor: pointer; text-align: center; }
+    .tab-btn.active { background-color: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+    .search-bar-container { margin-bottom: 20px; }
+    .search-input-wrapper { position: relative; }
+    .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+    .search-input { width: 100%; background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 10px 10px 10px 40px; color: var(--text-main); outline: none; }
+    .level-list { display: flex; flex-direction: column; gap: 12px; }
+    .level-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; display: flex; overflow: hidden; align-items: center; }
+    .level-thumb-wrapper { width: 180px; height: 100px; flex-shrink: 0; }
+    .level-thumb { width: 100%; height: 100%; object-fit: cover; }
+    .level-info { padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+    .level-header { display: flex; align-items: center; gap: 8px; }
+    .level-rank { color: var(--accent-blue); font-weight: bold; }
+    .level-meta { font-size: 0.85rem; color: var(--text-muted); display: flex; gap: 10px; }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <a href="index.html" class="nav-brand"><i class="fa-solid fa-globe"></i> LPDM/LIDM LIST</a>
+    <button class="icon-btn" id="themeToggle"><i class="fa-solid fa-sun"></i></button>
+  </header>
+
+  <main class="container">
+    <a href="index.html" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Voltar ao Início</a>
+
+    <div class="list-tabs">
+      <button class="tab-btn active" id="tabLpdm">LPDM List</button>
+      <button class="tab-btn" id="tabLidm">LIDM List</button>
+    </div>
+
+    <div class="search-bar-container">
+      <div class="search-input-wrapper">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" placeholder="Search..." class="search-input">
+      </div>
+    </div>
+
+    <!-- Lista LPDM -->
+    <div class="level-list" id="listLpdm">
+      <div class="level-card">
+        <div class="level-thumb-wrapper">
+          <img src="https://via.placeholder.com/200x110/111827/ffffff?text=Society" alt="Society" class="level-thumb">
+        </div>
+        <div class="level-info">
+          <div class="level-header">
+            <span class="level-rank">#1</span>
+            <h2 class="level-title">Society (LPDM)</h2>
+          </div>
+          <div class="level-meta">
+            <span>Neomarblian</span>
+            <span style="color: #10b981;">wPopoff</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lista LIDM -->
+    <div class="level-list" id="listLidm" style="display: none;">
+      <div class="level-card">
+        <div class="level-thumb-wrapper">
+          <img src="https://via.placeholder.com/200x110/1e293b/ffffff?text=Acheron" alt="Acheron" class="level-thumb">
+        </div>
+        <div class="level-info">
+          <div class="level-header">
+            <span class="level-rank">#1</span>
+            <h2 class="level-title">Acheron (LIDM)</h2>
+          </div>
+          <div class="level-meta">
+            <span>Riot</span>
+            <span style="color: #10b981;">Zoink</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const tabLpdm = document.getElementById('tabLpdm');
+    const tabLidm = document.getElementById('tabLidm');
+    const listLpdm = document.getElementById('listLpdm');
+    const listLidm = document.getElementById('listLidm');
+
+    tabLpdm.addEventListener('click', () => {
+      tabLpdm.classList.add('active');
+      tabLidm.classList.remove('active');
+      listLpdm.style.display = 'flex';
+      listLidm.style.display = 'none';
+    });
+
+    tabLidm.addEventListener('click', () => {
+      tabLidm.classList.add('active');
+      tabLpdm.classList.remove('active');
+      listLidm.style.display = 'flex';
+      listLpdm.style.display = 'none';
+    });
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light-mode');
+    });
+  </script>
+</body>
+</html>
