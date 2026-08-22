@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aprovar Níveis - Moderador</title>
+  <title>Painel de Moderação - LPDM/LIDM List</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -13,12 +13,18 @@
     .navbar { width: 100%; background-color: var(--card-bg); border-bottom: 1px solid var(--card-border); padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-radius: 8px; }
     .nav-brand { display: flex; align-items: center; gap: 10px; font-weight: bold; text-decoration: none; color: var(--text-main); }
     .container { max-width: 850px; margin: 0 auto; }
+    
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; }
+    .tab-btn { flex: 1; padding: 10px; background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-muted); font-weight: bold; border-radius: 6px; cursor: pointer; text-align: center; }
+    .tab-btn.active { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+
     .level-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 18px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px; }
     .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
     input[type="number"] { width: 90px; padding: 8px; background: #0b111e; border: 1px solid var(--card-border); color: #fff; border-radius: 6px; }
-    button { padding: 9px 16px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+    button { padding: 9px 16px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; font-size: 0.9rem; }
     .btn-approve { background: var(--success-green); color: white; }
     .btn-reject { background: var(--danger-red); color: white; }
+    .btn-delete { background: var(--danger-red); color: white; }
     .badge { padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; background: #1e293b; color: #3b82f6; display: inline-block; }
   </style>
 </head>
@@ -34,8 +40,12 @@
     </div>
 
     <div id="modContent">
-      <h3 style="margin-bottom: 15px;"><i class="fa-solid fa-clock-history"></i> Níveis Pendentes</h3>
-      <div id="pendingList">Carregando...</div>
+      <div class="tabs">
+        <button class="tab-btn active" id="btnTabPending" onclick="switchModTab('pending')">Níveis Pendentes</button>
+        <button class="tab-btn" id="btnTabApproved" onclick="switchModTab('approved')">Níveis Já Aprovados (Gerenciar)</button>
+      </div>
+
+      <div id="listContainer">Carregando...</div>
     </div>
   </main>
 
@@ -43,6 +53,8 @@
     const SUPABASE_URL = "https://cspsyzdohhprxoraudap.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcHN5emRvaGhwcnhvcmF1ZGFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjQ3NjEsImV4cCI6MjEwMzAwMDc2MX0.1uQOWMpovDiDFUIYbJ-1bovwc7OjGd4PauCm5U34dlE";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentModView = 'pending';
 
     async function checkPermission() {
       const { data: { session } } = await supabaseClient.auth.getSession();
@@ -60,66 +72,100 @@
         return;
       }
 
-      loadPendingLevels();
+      loadData();
     }
 
-    async function loadPendingLevels() {
+    function switchModTab(view) {
+      currentModView = view;
+      document.getElementById('btnTabPending').classList.toggle('active', view === 'pending');
+      document.getElementById('btnTabApproved').classList.toggle('active', view === 'approved');
+      loadData();
+    }
+
+    async function loadData() {
+      const container = document.getElementById('listContainer');
+      container.innerHTML = "Carregando...";
+
       const { data: levels, error } = await supabaseClient
         .from('levels')
         .select('*')
-        .eq('status', 'pending')
-        .order('created_at', { ascending: true });
+        .eq('status', currentModView)
+        .order(currentModView === 'approved' ? 'position' : 'created_at', { ascending: true });
 
-      const container = document.getElementById('pendingList');
       container.innerHTML = "";
 
       if (error || !levels || levels.length === 0) {
-        container.innerHTML = "<p style='color: var(--text-muted);'>Nenhum nível pendente no momento.</p>";
+        container.innerHTML = `<p style='color: var(--text-muted); text-align:center;'>Nenhum nível ${currentModView === 'pending' ? 'pendente' : 'aprovado'} encontrado.</p>`;
         return;
       }
 
       levels.forEach(lvl => {
         const card = document.createElement('div');
         card.className = 'level-card';
-        card.innerHTML = `
-          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-            <div>
-              <h3>${lvl.name} <span class="badge">${lvl.list_type}</span></h3>
-              <p style="color: var(--text-muted); font-size: 0.9rem;">ID GD: <b>${lvl.gd_id}</b> | Criador: <b>${lvl.creator}</b> | Verificador: <b>${lvl.verifier || '???'}</b></p>
-              ${lvl.has_nong ? `<p style="color:#8b5cf6; font-size:0.85rem;"><b>Música NONG:</b> ${lvl.nong_name || 'Sim'}</p>` : ''}
-              <p style="margin-top: 6px;"><a href="${lvl.video_url}" target="_blank" style="color: var(--accent-blue); text-decoration: none;"><i class="fa-solid fa-up-right-from-square"></i> Abrir Link da Showcase</a></p>
+
+        if (currentModView === 'pending') {
+          // Visualização para Aprovar/Rejeitar
+          card.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <h3>${lvl.name} <span class="badge">${lvl.list_type}</span></h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">ID GD: <b>${lvl.gd_id}</b> | Criador: <b>${lvl.creator}</b> | Verificador: <b>${lvl.verifier}</b></p>
+                ${lvl.has_nong ? `<p style="color:#8b5cf6; font-size:0.85rem;"><b>NONG:</b> ${lvl.nong_name}</p>` : ''}
+                <p style="margin-top: 6px;"><a href="${lvl.video_url}" target="_blank" style="color: var(--accent-blue); text-decoration: none;"><i class="fa-solid fa-up-right-from-square"></i> Abrir Showcase</a></p>
+              </div>
+              ${lvl.thumbnail_url ? `<img src="${lvl.thumbnail_url}" style="width:110px; height:65px; object-fit:cover; border-radius:6px;">` : ''}
             </div>
-            ${lvl.thumbnail_url ? `<img src="${lvl.thumbnail_url}" style="width:110px; height:65px; object-fit:cover; border-radius:6px;">` : ''}
-          </div>
-          <div class="actions">
-            <label>Posição na ${lvl.list_type}:</label>
-            <input type="number" id="pos-${lvl.id}" placeholder="Ex: 1" min="1">
-            <button class="btn-approve" onclick="approveLevel('${lvl.id}')"><i class="fa-solid fa-check"></i> Aprovar</button>
-            <button class="btn-reject" onclick="rejectLevel('${lvl.id}')"><i class="fa-solid fa-xmark"></i> Rejeitar</button>
-          </div>
-        `;
+            <div class="actions">
+              <label>Posição na ${lvl.list_type}:</label>
+              <input type="number" id="pos-${lvl.id}" placeholder="Ex: 1" min="1">
+              <button class="btn-approve" onclick="approveLevel('${lvl.id}')"><i class="fa-solid fa-check"></i> Aprovar</button>
+              <button class="btn-reject" onclick="rejectLevel('${lvl.id}')"><i class="fa-solid fa-xmark"></i> Rejeitar</button>
+            </div>
+          `;
+        } else {
+          // Visualização para Gerenciar/Remover níveis já aprovados
+          card.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <h3>#${lvl.position} - ${lvl.name} <span class="badge">${lvl.list_type}</span></h3>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">ID GD: <b>${lvl.gd_id}</b> | Criador: <b>${lvl.creator}</b> | Verificador: <b>${lvl.verifier}</b></p>
+              </div>
+              ${lvl.thumbnail_url ? `<img src="${lvl.thumbnail_url}" style="width:110px; height:65px; object-fit:cover; border-radius:6px;">` : ''}
+            </div>
+            <div class="actions">
+              <button class="btn-delete" onclick="deleteLevel('${lvl.id}')"><i class="fa-solid fa-trash"></i> Remover da Lista</button>
+            </div>
+          `;
+        }
         container.appendChild(card);
       });
     }
 
     async function approveLevel(id) {
       const posInput = document.getElementById(`pos-${id}`).value;
-      if (!posInput || posInput < 1) return alert("Informe a posição em que o nível ficará no ranking!");
+      if (!posInput || posInput < 1) return alert("Informe a posição!");
 
       const { error } = await supabaseClient
         .from('levels')
         .update({ status: 'approved', position: parseInt(posInput) })
         .eq('id', id);
 
-      if (error) alert("Erro ao aprovar: " + error.message);
-      else { alert("Nível aprovado!"); loadPendingLevels(); }
+      if (error) alert("Erro: " + error.message);
+      else { alert("Nível aprovado!"); loadData(); }
     }
 
     async function rejectLevel(id) {
       if (!confirm("Rejeitar este nível?")) return;
       const { error } = await supabaseClient.from('levels').update({ status: 'rejected' }).eq('id', id);
-      if (error) alert("Erro ao rejeitar: " + error.message);
-      else loadPendingLevels();
+      if (error) alert("Erro: " + error.message);
+      else loadData();
+    }
+
+    async function deleteLevel(id) {
+      if (!confirm("Tem certeza que deseja apagar/remover este nível permanentemente da lista?")) return;
+      const { error } = await supabaseClient.from('levels').delete().eq('id', id);
+      if (error) alert("Erro ao remover: " + error.message);
+      else { alert("Nível removido com sucesso!"); loadData(); }
     }
 
     checkPermission();
