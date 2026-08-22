@@ -3,34 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LPDM/LIDM List - Aprovar Níveis</title>
+  <title>Aprovar Níveis - Moderador</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    :root {
-      --bg-color: #0b111e;
-      --card-bg: #131c2e;
-      --card-border: #1d2b45;
-      --text-main: #e2e8f0;
-      --text-muted: #8493a8;
-      --accent-blue: #3b82f6;
-      --success-green: #22c55e;
-      --danger-red: #ef4444;
-    }
+    :root { --bg-color: #0b111e; --card-bg: #131c2e; --card-border: #1d2b45; --text-main: #e2e8f0; --accent-blue: #3b82f6; --text-muted: #8493a8; --success-green: #22c55e; --danger-red: #ef4444; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
     body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; padding: 20px; }
-    .navbar { width: 100%; background-color: var(--card-bg); border-bottom: 1px solid var(--card-border); padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-radius: 8px; }
+    .navbar { width: 100%; background-color: var(--card-bg); border-bottom: 1px solid var(--card-border); padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-radius: 8px; }
     .nav-brand { display: flex; align-items: center; gap: 10px; font-weight: bold; text-decoration: none; color: var(--text-main); }
-    .container { max-width: 800px; margin: 0 auto; }
-    .level-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 20px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 12px; }
-    .level-header h3 { font-size: 1.2rem; }
-    .level-header p { color: var(--text-muted); font-size: 0.9rem; }
+    .container { max-width: 850px; margin: 0 auto; }
+    .level-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 18px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px; }
     .actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 10px; }
-    input[type="number"] { width: 100px; padding: 8px; background: #0b111e; border: 1px solid var(--card-border); color: #fff; border-radius: 6px; outline: none; }
+    input[type="number"] { width: 90px; padding: 8px; background: #0b111e; border: 1px solid var(--card-border); color: #fff; border-radius: 6px; }
     button { padding: 9px 16px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
     .btn-approve { background: var(--success-green); color: white; }
     .btn-reject { background: var(--danger-red); color: white; }
-    .denied-box { text-align: center; background: var(--card-bg); border: 1px solid var(--card-border); padding: 40px; border-radius: 12px; }
+    .badge { padding: 3px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; background: #1e293b; color: #3b82f6; display: inline-block; }
   </style>
 </head>
 <body>
@@ -40,14 +29,13 @@
   </header>
 
   <main class="container">
-    <div id="accessDenied" class="denied-box" style="display: none;">
-      <h2 style="color: var(--danger-red);"><i class="fa-solid fa-lock"></i> Acesso Restrito</h2>
-      <p style="margin-top: 10px; color: var(--text-muted);">Esta área é exclusiva para moderadores e administradores da lista.</p>
+    <div id="accessDenied" style="display: none; text-align: center; padding: 40px; background: var(--card-bg); border-radius: 8px; color: var(--danger-red);">
+      <h2><i class="fa-solid fa-lock"></i> Acesso Restrito a Moderadores</h2>
     </div>
 
     <div id="modContent">
-      <h3 style="margin-bottom: 20px;"><i class="fa-solid fa-clock-history"></i> Níveis Pendentes de Aprovação</h3>
-      <div id="pendingList">Carregando solicitações...</div>
+      <h3 style="margin-bottom: 15px;"><i class="fa-solid fa-clock-history"></i> Níveis Pendentes</h3>
+      <div id="pendingList">Carregando...</div>
     </div>
   </main>
 
@@ -58,11 +46,7 @@
 
     async function checkPermission() {
       const { data: { session } } = await supabaseClient.auth.getSession();
-      
-      if (!session) {
-        window.location.href = "CadastroLogin.html";
-        return;
-      }
+      if (!session) { window.location.href = "CadastroLogin.html"; return; }
 
       const { data: profile } = await supabaseClient
         .from('profiles')
@@ -90,7 +74,7 @@
       container.innerHTML = "";
 
       if (error || !levels || levels.length === 0) {
-        container.innerHTML = "<p style='color: var(--text-muted);'>Nenhum nível pendente de avaliação no momento.</p>";
+        container.innerHTML = "<p style='color: var(--text-muted);'>Nenhum nível pendente no momento.</p>";
         return;
       }
 
@@ -98,13 +82,17 @@
         const card = document.createElement('div');
         card.className = 'level-card';
         card.innerHTML = `
-          <div class="level-header">
-            <h3>${lvl.name}</h3>
-            <p>Criador: <b>${lvl.creator}</b></p>
-            <p style="margin-top: 4px;"><a href="${lvl.video_url}" target="_blank" style="color: var(--accent-blue); text-decoration: none;"><i class="fa-solid fa-play"></i> Assistir Vídeo de Prova</a></p>
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+              <h3>${lvl.name} <span class="badge">${lvl.list_type}</span></h3>
+              <p style="color: var(--text-muted); font-size: 0.9rem;">ID GD: <b>${lvl.gd_id}</b> | Criador: <b>${lvl.creator}</b> | Verificador: <b>${lvl.verifier || '???'}</b></p>
+              ${lvl.has_nong ? `<p style="color:#8b5cf6; font-size:0.85rem;"><b>Música NONG:</b> ${lvl.nong_name || 'Sim'}</p>` : ''}
+              <p style="margin-top: 6px;"><a href="${lvl.video_url}" target="_blank" style="color: var(--accent-blue); text-decoration: none;"><i class="fa-solid fa-up-right-from-square"></i> Abrir Link da Showcase</a></p>
+            </div>
+            ${lvl.thumbnail_url ? `<img src="${lvl.thumbnail_url}" style="width:110px; height:65px; object-fit:cover; border-radius:6px;">` : ''}
           </div>
           <div class="actions">
-            <label>Posição no Ranking:</label>
+            <label>Posição na ${lvl.list_type}:</label>
             <input type="number" id="pos-${lvl.id}" placeholder="Ex: 1" min="1">
             <button class="btn-approve" onclick="approveLevel('${lvl.id}')"><i class="fa-solid fa-check"></i> Aprovar</button>
             <button class="btn-reject" onclick="rejectLevel('${lvl.id}')"><i class="fa-solid fa-xmark"></i> Rejeitar</button>
@@ -116,38 +104,22 @@
 
     async function approveLevel(id) {
       const posInput = document.getElementById(`pos-${id}`).value;
-      if (!posInput || posInput < 1) {
-        alert("Por favor, digite a posição exata em que o nível deve ficar na lista.");
-        return;
-      }
+      if (!posInput || posInput < 1) return alert("Informe a posição em que o nível ficará no ranking!");
 
       const { error } = await supabaseClient
         .from('levels')
         .update({ status: 'approved', position: parseInt(posInput) })
         .eq('id', id);
 
-      if (error) {
-        alert("Erro ao aprovar o nível: " + error.message);
-      } else {
-        alert("Nível aprovado e inserido no ranking com sucesso!");
-        loadPendingLevels();
-      }
+      if (error) alert("Erro ao aprovar: " + error.message);
+      else { alert("Nível aprovado!"); loadPendingLevels(); }
     }
 
     async function rejectLevel(id) {
-      if (!confirm("Tem certeza que deseja rejeitar este nível?")) return;
-
-      const { error } = await supabaseClient
-        .from('levels')
-        .update({ status: 'rejected' })
-        .eq('id', id);
-
-      if (error) {
-        alert("Erro ao rejeitar o nível: " + error.message);
-      } else {
-        alert("Nível rejeitado.");
-        loadPendingLevels();
-      }
+      if (!confirm("Rejeitar este nível?")) return;
+      const { error } = await supabaseClient.from('levels').update({ status: 'rejected' }).eq('id', id);
+      if (error) alert("Erro ao rejeitar: " + error.message);
+      else loadPendingLevels();
     }
 
     checkPermission();
