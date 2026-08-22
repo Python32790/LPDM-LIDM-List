@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LPDM/LIDM List - Início</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- SDK Oficial do Supabase -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --bg-color: #0b111e;
+      --card-bg: #131c2e;
+      --card-border: #1d2b45;
+      --text-main: #e2e8f0;
+      --text-muted: #8493a8;
+      --accent-blue: #3b82f6;
+      --danger-red: #ef4444;
+    }
+    body.light-mode {
+      --bg-color: #f1f5f9;
+      --card-bg: #ffffff;
+      --card-border: #cbd5e1;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --accent-blue: #2563eb;
+      --danger-red: #dc2626;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
+    .navbar { width: 100%; background-color: var(--card-bg); border-bottom: 1px solid var(--card-border); padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
+    .nav-brand { display: flex; align-items: center; gap: 10px; font-weight: bold; text-decoration: none; color: var(--text-main); }
+    .nav-actions { display: flex; align-items: center; gap: 12px; }
+    .icon-btn { background: transparent; border: none; color: var(--text-muted); font-size: 1.1rem; cursor: pointer; }
+    .hero-section { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 40px 20px; text-align: center; }
+    .hero-container { max-width: 600px; }
+    .hero-title { font-size: 2.2rem; font-weight: 800; margin-bottom: 12px; color: var(--accent-blue); }
+    .hero-subtitle { color: var(--text-muted); font-size: 0.95rem; line-height: 1.5; margin-bottom: 35px; }
+    .hero-actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; align-items: center; }
+    .btn { padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 0.9rem; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; }
+    .btn-primary { background-color: var(--accent-blue); color: #fff; }
+    .btn-secondary { background-color: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-main); }
+    .btn-tertiary { background-color: #1e293b; color: #fff; border: 1px solid var(--card-border); }
+    .user-profile { display: flex; align-items: center; gap: 10px; }
+    .btn-logout { background: transparent; border: 1px solid var(--card-border); color: var(--danger-red); padding: 10px 14px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <header class="navbar">
+    <a href="index.html" class="nav-brand"><i class="fa-solid fa-globe"></i> LPDM/LIDM LIST</a>
+    <div class="nav-actions">
+      <button class="icon-btn" id="themeToggle"><i class="fa-solid fa-sun"></i></button>
+    </div>
+  </header>
+
+  <section class="hero-section">
+    <div class="hero-container">
+      <h1 class="hero-title">LPDM/LIDM LIST</h1>
+      <p class="hero-subtitle">The most complete and trusted ranking of the hardest Geometry Dash demons, maintained by a dedicated community.</p>
+      
+      <div class="hero-actions">
+        <a href="LevelsList.html" class="btn btn-primary">Entrar Na Lista <i class="fa-solid fa-arrow-right"></i></a>
+        
+        <!-- Botão de Cadastro/Login quando DESLOGADO -->
+        <a href="CadastroLogin.html" class="btn btn-secondary" id="authBtn">Cadastrar/Login</a>
+
+        <!-- Perfil do Usuário exibido quando LOGADO -->
+        <div class="user-profile" id="userProfile" style="display: none;">
+          <span class="btn btn-secondary" id="userNameLabel"><i class="fa-solid fa-user"></i> ...</span>
+          <button class="btn-logout" id="btnLogout"><i class="fa-solid fa-right-from-bracket"></i> Sair</button>
+        </div>
+
+        <a href="EnviarLevel.html" class="btn btn-tertiary">Enviar Um Nível <i class="fa-solid fa-plus"></i></a>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Configurações do Supabase
+    const SUPABASE_URL = "https://cspsyzdohhprxoraudap.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcHN5emRvaGhwcnhvcmF1ZGFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjQ3NjEsImV4cCI6MjEwMzAwMDc2MX0.1uQOWMpovDiDFUIYbJ-1bovwc7OjGd4PauCm5U34dlE";
+    
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const authBtn = document.getElementById('authBtn');
+    const userProfile = document.getElementById('userProfile');
+    const userNameLabel = document.getElementById('userNameLabel');
+    const btnLogout = document.getElementById('btnLogout');
+
+    // Verifica a sessão do usuário no banco
+    async function loadUserSession() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+
+      if (session) {
+        const username = session.user.user_metadata.username || session.user.email;
+        userNameLabel.innerHTML = `<i class="fa-solid fa-user"></i> ${username}`;
+        authBtn.style.display = 'none';
+        userProfile.style.display = 'flex';
+      } else {
+        authBtn.style.display = 'inline-flex';
+        userProfile.style.display = 'none';
+      }
+    }
+
+    // Botão de deslogar
+    btnLogout.addEventListener('click', async () => {
+      await supabaseClient.auth.signOut();
+      window.location.reload();
+    });
+
+    // Alternar tema claro/escuro
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light-mode');
+    });
+
+    loadUserSession();
+  </script>
+</body>
+</html>
