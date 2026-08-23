@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Enviar Nível - LPDM/LIDM List</title>
+  <title>Enviar Nível - Meow List</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -18,24 +18,30 @@
     input[type="file"] { padding: 8px; cursor: pointer; }
     input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
     button { background: var(--accent-blue); color: #fff; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; font-size: 1rem; }
-    .btn-verify { background: #1e293b; border: 1px solid var(--card-border); color: #3b82f6; padding: 8px; margin-top: 4px; font-size: 0.85rem; }
+    .btn-verify { background: #1e293b; border: 1px solid var(--card-border); color: #3b82f6; padding: 8px; margin-top: 4px; font-size: 0.85rem; width: auto; white-space: nowrap; }
     a { color: var(--text-muted); text-decoration: none; font-size: 0.85rem; display: inline-block; margin-bottom: 15px; }
     .api-status { font-size: 0.8rem; margin-top: 4px; font-weight: bold; }
     .api-success { color: #22c55e; }
     .api-error { color: #ef4444; }
+    .guest-banner { background: #1e293b; border: 1px solid var(--card-border); padding: 10px; border-radius: 6px; margin-bottom: 15px; font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center; }
   </style>
 </head>
 <body>
   <div class="card">
     <a href="index.html"><i class="fa-solid fa-arrow-left"></i> Voltar ao Início</a>
-    <h2>Enviar Nível para a Lista</h2>
+    <h2>Enviar Nível - Meow List</h2>
     
+    <div id="userStatusBanner" class="guest-banner" style="display:none;">
+      <span id="userStatusText">Modo Convidado</span>
+      <a href="CadastroLogin.html" style="margin:0; color: var(--accent-blue);">Entrar/Criar Conta</a>
+    </div>
+
     <form id="levelForm" style="margin-top: 15px;">
       <div class="form-group">
         <label>ID do Nível no Geometry Dash</label>
         <div style="display: flex; gap: 8px;">
           <input type="text" id="gdId" required placeholder="Ex: 12345678">
-          <button type="button" class="btn-verify" id="btnCheckGd" style="width: auto; white-space: nowrap;">Validar ID</button>
+          <button type="button" class="btn-verify" id="btnCheckGd">Validar ID</button>
         </div>
         <div id="gdStatus" class="api-status"></div>
       </div>
@@ -60,12 +66,13 @@
         <select id="listType" required>
           <option value="LPDM">LPDM ( Levels Possíveis Dedicados ao Meow )</option>
           <option value="LIDM">LIDM ( Levels Impossíveis Dedicados ao Meow )</option>
+          <option value="LLBDM">LLBDM ( Levels Luck Based Dedicados ao Meow )</option>
         </select>
       </div>
 
       <div class="form-group">
-        <label>Link da Showcase / Vídeo</label>
-        <input type="text" id="videoUrl" placeholder="Cole o link do vídeo de prova aqui">
+        <label>Link da Showcase / Vídeo (Opcional)</label>
+        <input type="text" id="videoUrl" placeholder="Cole o link do vídeo de prova aqui (opcional)">
       </div>
 
       <div class="form-group">
@@ -92,43 +99,39 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcHN5emRvaGhwcnhvcmF1ZGFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjQ3NjEsImV4cCI6MjEwMzAwMDc2MX0.1uQOWMpovDiDFUIYbJ-1bovwc7OjGd4PauCm5U34dlE";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    async function checkAuthStatus() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      const banner = document.getElementById('userStatusBanner');
+      const text = document.getElementById('userStatusText');
+      banner.style.display = 'flex';
+      if (session) {
+        text.innerHTML = `Logado como: <b>${session.user.email}</b>`;
+      } else {
+        text.innerHTML = `Modo Convidado (Envios permitidos)`;
+      }
+    }
+    checkAuthStatus();
+
     function toggleNongInput() {
       const checked = document.getElementById('hasNong').checked;
       const nongGroup = document.getElementById('nongGroup');
       const nongInput = document.getElementById('nongName');
-
       nongGroup.style.display = checked ? 'flex' : 'none';
-      
-      if (checked) {
-        nongInput.setAttribute('required', 'required');
-      } else {
-        nongInput.removeAttribute('required');
-        nongInput.value = '';
-      }
+      if (checked) nongInput.setAttribute('required', 'required');
+      else { nongInput.removeAttribute('required'); nongInput.value = ''; }
     }
 
     document.getElementById('btnCheckGd').addEventListener('click', async () => {
       const gdId = document.getElementById('gdId').value.trim();
       const statusDiv = document.getElementById('gdStatus');
-
-      if (!gdId) {
-        statusDiv.className = "api-status api-error";
-        statusDiv.textContent = "Digite um ID válido.";
-        return;
-      }
-
-      statusDiv.className = "api-status";
-      statusDiv.textContent = "Buscando dados no Geometry Dash...";
-
+      if (!gdId) { statusDiv.className = "api-status api-error"; statusDiv.textContent = "Digite um ID válido."; return; }
+      statusDiv.className = "api-status"; statusDiv.textContent = "Buscando dados no Geometry Dash...";
       try {
         const response = await fetch(`https://gdbrowser.com/api/level/${gdId}`);
-        if (!response.ok) throw new Error("Nível não encontrado no GD!");
-
+        if (!response.ok) throw new Error("Nível não encontrado!");
         const data = await response.json();
-
         document.getElementById('levelName').value = data.name;
         document.getElementById('levelCreator').value = data.author;
-
         statusDiv.className = "api-success api-status";
         statusDiv.textContent = `✓ Nível encontrado: "${data.name}" por ${data.author}`;
       } catch (err) {
@@ -139,30 +142,21 @@
 
     document.getElementById('levelForm').addEventListener('submit', async function(e) {
       e.preventDefault();
-
       const { data: { session } } = await supabaseClient.auth.getSession();
-      if (!session) {
-        alert("Você precisa estar logado para enviar um nível!");
-        window.location.href = "CadastroLogin.html";
-        return;
-      }
-
+      
       const gdId = document.getElementById('gdId').value.trim();
       const name = document.getElementById('levelName').value.trim();
       const creator = document.getElementById('levelCreator').value.trim();
       const verifier = document.getElementById('levelVerifier').value.trim();
       const listType = document.getElementById('listType').value;
-      const videoUrl = document.getElementById('videoUrl').value.trim();
+      const videoUrl = document.getElementById('videoUrl').value.trim() || null;
       const thumbnailFileInput = document.getElementById('thumbnailFile');
       const hasNong = document.getElementById('hasNong').checked;
       const nongName = document.getElementById('nongName').value.trim();
       const btn = document.getElementById('btnSubmit');
 
       const file = thumbnailFileInput.files[0];
-      if (!file) {
-        alert("Por favor, selecione uma imagem para a thumbnail.");
-        return;
-      }
+      if (!file) { alert("Selecione uma imagem para a thumbnail."); return; }
 
       btn.textContent = "Enviando imagem e dados...";
       btn.disabled = true;
@@ -172,15 +166,10 @@
         const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
         const filePath = `level_thumbnails/${fileName}`;
 
-        const { error: uploadError } = await supabaseClient.storage
-          .from('thumbnails')
-          .upload(filePath, file);
-
+        const { error: uploadError } = await supabaseClient.storage.from('thumbnails').upload(filePath, file);
         if (uploadError) throw uploadError;
 
-        const { data: { publicUrl } } = supabaseClient.storage
-          .from('thumbnails')
-          .getPublicUrl(filePath);
+        const { data: { publicUrl } } = supabaseClient.storage.from('thumbnails').getPublicUrl(filePath);
 
         const { error: dbError } = await supabaseClient.from('levels').insert({
           gd_id: gdId,
@@ -192,16 +181,15 @@
           thumbnail_url: publicUrl,
           has_nong: hasNong,
           nong_name: hasNong ? nongName : null,
-          submitted_by: session.user.id
+          submitted_by: session ? session.user.id : null
         });
 
         if (dbError) throw dbError;
 
-        alert("Nível enviado com sucesso! Aguarde a verificação dos moderadores.");
+        alert("Nível enviado com sucesso! Aguarde a moderação.");
         this.reset();
         document.getElementById('gdStatus').textContent = "";
         toggleNongInput();
-
       } catch (err) {
         alert("Erro no envio: " + err.message);
       } finally {

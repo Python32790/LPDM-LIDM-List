@@ -3,203 +3,96 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>LPDM/LIDM List - Cadastro / Login</title>
+  <title>Entrar / Cadastrar - Meow List</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- SDK Oficial do Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <style>
-    :root {
-      --bg-color: #0b111e;
-      --card-bg: #131c2e;
-      --card-border: #1d2b45;
-      --text-main: #e2e8f0;
-      --text-muted: #8493a8;
-      --accent-blue: #3b82f6;
-      --input-bg: #0b111e;
-    }
-    body.light-mode {
-      --bg-color: #f1f5f9;
-      --card-bg: #ffffff;
-      --card-border: #cbd5e1;
-      --text-main: #0f172a;
-      --text-muted: #64748b;
-      --accent-blue: #2563eb;
-      --input-bg: #f8fafc;
-    }
+    :root { --bg-color: #0b111e; --card-bg: #131c2e; --card-border: #1d2b45; --text-main: #e2e8f0; --accent-blue: #3b82f6; --text-muted: #8493a8; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
-    .navbar { width: 100%; background-color: var(--card-bg); border-bottom: 1px solid var(--card-border); padding: 14px 24px; display: flex; justify-content: space-between; align-items: center; }
-    .nav-brand { display: flex; align-items: center; gap: 10px; font-weight: bold; text-decoration: none; color: var(--text-main); }
-    .icon-btn { background: transparent; border: none; color: var(--text-muted); font-size: 1.1rem; cursor: pointer; }
-    .content-area { flex: 1; display: flex; justify-content: center; align-items: center; padding: 40px 20px; }
-    .page-card { background-color: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; width: 100%; max-width: 450px; padding: 28px; }
-    .btn-back { display: inline-flex; align-items: center; gap: 6px; color: var(--text-muted); text-decoration: none; font-size: 0.85rem; margin-bottom: 16px; cursor: pointer; background: none; border: none; }
-    .page-form { display: flex; flex-direction: column; gap: 14px; margin-top: 15px; }
-    .form-group { display: flex; flex-direction: column; gap: 6px; }
-    .form-group label { font-size: 0.85rem; font-weight: 600; }
-    .form-group input { background-color: var(--input-bg); border: 1px solid var(--card-border); border-radius: 6px; padding: 10px; color: var(--text-main); outline: none; }
-    .btn-submit { background-color: var(--accent-blue); color: #fff; padding: 12px; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-    .auth-switch { margin-top: 18px; font-size: 0.85rem; color: var(--text-muted); text-align: center; }
-    .auth-switch span { color: var(--accent-blue); cursor: pointer; font-weight: bold; }
+    body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+    .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; width: 100%; max-width: 400px; padding: 28px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    label { font-size: 0.9rem; color: var(--text-muted); font-weight: 600; }
+    input { background: #0b111e; border: 1px solid var(--card-border); padding: 10px; border-radius: 6px; color: #fff; font-size: 0.95rem; width: 100%; }
+    button { background: var(--accent-blue); color: #fff; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; font-size: 1rem; }
+    .btn-guest { background: #1e293b; border: 1px solid var(--card-border); color: var(--text-main); margin-top: 8px; }
+    .toggle-auth { text-align: center; margin-top: 15px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; }
+    .toggle-auth span { color: var(--accent-blue); font-weight: bold; }
+    a { color: var(--text-muted); text-decoration: none; font-size: 0.85rem; display: inline-block; margin-bottom: 15px; }
   </style>
 </head>
 <body>
-  <header class="navbar">
-    <a href="index.html" class="nav-brand"><i class="fa-solid fa-globe"></i> LPDM/LIDM LIST</a>
-    <button class="icon-btn" id="themeToggle"><i class="fa-solid fa-sun"></i></button>
-  </header>
+  <div class="card">
+    <a href="index.html"><i class="fa-solid fa-arrow-left"></i> Voltar ao Início</a>
+    <h2 id="formTitle">Entrar na Meow List</h2>
+    
+    <form id="authForm" style="margin-top: 15px;">
+      <div class="form-group">
+        <label>E-mail</label>
+        <input type="email5" id="email" required placeholder="seu@email.com">
+      </div>
+      <div class="form-group">
+        <label>Senha</label>
+        <input type="password" id="password" required placeholder="Sua senha">
+      </div>
+      <button type="submit" id="btnSubmit">Entrar</button>
+    </form>
 
-  <div class="content-area">
-    <!-- LOGIN -->
-    <div class="page-card" id="loginBox">
-      <a href="index.html" class="btn-back"><i class="fa-solid fa-arrow-left"></i> Voltar</a>
-      <h2>Entrar na Conta</h2>
-      <form class="page-form" id="loginForm">
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="loginEmail" placeholder="Seu email registrado" required>
-        </div>
-        <div class="form-group">
-          <label>Senha</label>
-          <input type="password" id="loginPass" placeholder="Sua senha" required>
-        </div>
-        <button type="submit" class="btn-submit" id="btnLoginSubmit">Entrar</button>
-      </form>
-      <p class="auth-switch">Não tem uma conta? <span id="btnGoRegister">Cadastrar</span></p>
-    </div>
+    <button class="btn-guest" onclick="continueAsGuest()"><i class="fa-solid fa-user-secret"></i> Continuar como Convidado</button>
 
-    <!-- CADASTRO -->
-    <div class="page-card" id="registerBox" style="display: none;">
-      <button class="btn-back" id="btnBackToLogin"><i class="fa-solid fa-arrow-left"></i> Voltar ao Login</button>
-      <h2>Criar Conta</h2>
-      <form class="page-form" id="registerForm">
-        <div class="form-group">
-          <label>Nome De Usuário</label>
-          <input type="text" id="regUsername" placeholder="Ex: ItsMeTennaGD" required>
-        </div>
-        <div class="form-group">
-          <label>Email</label>
-          <input type="email" id="regEmail" placeholder="Ex: Seu@Email.com" required>
-        </div>
-        <div class="form-group">
-          <label>Senha</label>
-          <input type="password" id="regPass" placeholder="Insira Uma Senha Aqui" required>
-        </div>
-        <div class="form-group">
-          <label>Verificar Senha</label>
-          <input type="password" id="regPassConfirm" placeholder="Re-Insira A Senha Aqui" required>
-        </div>
-        <button type="submit" class="btn-submit" id="btnRegisterSubmit">Enviar</button>
-      </form>
+    <div class="toggle-auth" onclick="toggleMode()">
+      Não tem uma conta? <span id="toggleText">Cadastre-se</span>
     </div>
   </div>
 
   <script>
-    // Suas credenciais salvas do Supabase:
     const SUPABASE_URL = "https://cspsyzdohhprxoraudap.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcHN5emRvaGhwcnhvcmF1ZGFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjQ3NjEsImV4cCI6MjEwMzAwMDc2MX0.1uQOWMpovDiDFUIYbJ-1bovwc7OjGd4PauCm5U34dlE";
-    
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const loginBox = document.getElementById('loginBox');
-    const registerBox = document.getElementById('registerBox');
+    let isSignUp = false;
 
-    // Redireciona automaticamente se o usuário já estiver logado
-    async function checkUserSession() {
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      if (session) {
-        window.location.href = "index.html";
-      }
+    function toggleMode() {
+      isSignUp = !isSignUp;
+      document.getElementById('formTitle').textContent = isSignUp ? 'Criar Conta na Meow List' : 'Entrar na Meow List';
+      document.getElementById('btnSubmit').textContent = isSignUp ? 'Cadastrar' : 'Entrar';
+      document.getElementById('toggleText').textContent = isSignUp ? 'Fazer Login' : 'Cadastre-se';
     }
-    checkUserSession();
 
-    document.getElementById('btnGoRegister').addEventListener('click', () => {
-      loginBox.style.display = 'none';
-      registerBox.style.display = 'block';
-    });
+    function continueAsGuest() {
+      // Limpa qualquer sessão anterior se houver e redireciona para o início
+      supabaseClient.auth.signOut();
+      window.location.href = "index.html";
+    }
 
-    document.getElementById('btnBackToLogin').addEventListener('click', () => {
-      registerBox.style.display = 'none';
-      loginBox.style.display = 'block';
-    });
-
-    // 1. CADASTRO REAL COM PROTEÇÃO DE DUPLICIDADE
-    document.getElementById('registerForm').addEventListener('submit', async function(e) {
+    document.getElementById('authForm').addEventListener('submit', async (e) => {
       e.preventDefault();
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const btn = document.getElementById('btnSubmit');
 
-      const username = document.getElementById('regUsername').value.trim();
-      const email = document.getElementById('regEmail').value.trim();
-      const pass = document.getElementById('regPass').value;
-      const passConfirm = document.getElementById('regPassConfirm').value;
-      const btnSubmit = document.getElementById('btnRegisterSubmit');
+      btn.disabled = true;
+      btn.textContent = "Processando...";
 
-      if (pass !== passConfirm) {
-        alert("As senhas não coincidem!");
-        return;
-      }
-
-      btnSubmit.textContent = "Verificando dados...";
-      btnSubmit.disabled = true;
-
-      // Executa o cadastro no banco do Supabase
-      const { data, error } = await supabaseClient.auth.signUp({
-        email: email,
-        password: pass,
-        options: {
-          data: { username: username }
-        }
-      });
-
-      if (error) {
-        if (error.message.includes("User already registered")) {
-          alert("Este e-mail já está em uso por outra conta!");
-        } else {
+      if (isSignUp) {
+        const { data, error } = await supabaseClient.auth.signUp({ email, password });
+        if (error) {
           alert("Erro no cadastro: " + error.message);
+        } else {
+          alert("Cadastro realizado! Verifique seu e-mail se necessário ou faça login.");
+          toggleMode();
         }
-      } else if (data.user && data.user.identities && data.user.identities.length === 0) {
-        alert("Este e-mail já está cadastrado!");
       } else {
-        alert(`Conta de "${username}" criada com sucesso! Enviamos um e-mail de confirmação para ${email}.`);
-        registerBox.style.display = 'none';
-        loginBox.style.display = 'block';
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        if (error) {
+          alert("Erro ao entrar: " + error.message);
+        } else {
+          alert("Login realizado com sucesso!");
+          window.location.href = "index.html";
+        }
       }
-
-      btnSubmit.textContent = "Enviar";
-      btnSubmit.disabled = false;
-    });
-
-    // 2. LOGIN REAL
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
-      e.preventDefault();
-
-      const email = document.getElementById('loginEmail').value.trim();
-      const pass = document.getElementById('loginPass').value;
-      const btnSubmit = document.getElementById('btnLoginSubmit');
-
-      btnSubmit.textContent = "Entrando...";
-      btnSubmit.disabled = true;
-
-      const { data, error } = await supabaseClient.auth.signInWithPassword({
-        email: email,
-        password: pass
-      });
-
-      if (error) {
-        alert("Erro ao entrar: " + error.message);
-      } else {
-        const username = data.user.user_metadata.username || "Usuário";
-        alert(`Bem-vindo de volta, ${username}!`);
-        window.location.href = "index.html";
-      }
-
-      btnSubmit.textContent = "Entrar";
-      btnSubmit.disabled = false;
-    });
-
-    document.getElementById('themeToggle').addEventListener('click', () => {
-      document.body.classList.toggle('light-mode');
+      btn.disabled = false;
+      btn.textContent = isSignUp ? 'Cadastrar' : 'Entrar';
     });
   </script>
 </body>
