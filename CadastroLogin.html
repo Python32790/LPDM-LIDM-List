@@ -10,15 +10,25 @@
     :root { --bg-color: #0b111e; --card-bg: #131c2e; --card-border: #1d2b45; --text-main: #e2e8f0; --accent-blue: #3b82f6; --text-muted: #8493a8; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
     body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
-    .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; width: 100%; max-width: 400px; padding: 28px; }
+    .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; width: 100%; max-width: 400px; padding: 28px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
     .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
     label { font-size: 0.9rem; color: var(--text-muted); font-weight: 600; }
     input { background: #0b111e; border: 1px solid var(--card-border); padding: 10px; border-radius: 6px; color: #fff; font-size: 0.95rem; width: 100%; }
-    button { background: var(--accent-blue); color: #fff; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; font-size: 1rem; }
-    .btn-guest { background: #1e293b; border: 1px solid var(--card-border); color: var(--text-main); margin-top: 8px; }
+    input:focus { outline: none; border-color: var(--accent-blue); }
+    button { background: var(--accent-blue); color: #fff; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; font-size: 1rem; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background 0.2s; }
+    button:hover { background: #2563eb; }
+    .social-btn { background: #1e293b; border: 1px solid var(--card-border); color: #fff; margin-top: 8px; transition: background 0.2s; }
+    .social-btn:hover { background: #2d3d59; }
+    .btn-guest { background: transparent; border: 1px dashed var(--card-border); color: var(--text-muted); margin-top: 12px; }
+    .btn-guest:hover { color: #fff; border-color: var(--text-muted); background: rgba(255,255,255,0.02); }
+    .divider { display: flex; align-items: center; text-align: center; color: var(--text-muted); font-size: 0.8rem; margin: 18px 0; }
+    .divider::before, .divider::after { content: ''; flex: 1; border-bottom: 1px solid var(--card-border); }
+    .divider span { padding: 0 10px; }
     .toggle-auth { text-align: center; margin-top: 15px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer; }
     .toggle-auth span { color: var(--accent-blue); font-weight: bold; }
     a { color: var(--text-muted); text-decoration: none; font-size: 0.85rem; display: inline-block; margin-bottom: 15px; }
+    a:hover { color: #fff; }
+    h2 { font-size: 1.5rem; margin-bottom: 5px; }
   </style>
 </head>
 <body>
@@ -29,7 +39,7 @@
     <form id="authForm" style="margin-top: 15px;">
       <div class="form-group">
         <label>E-mail</label>
-        <input type="email5" id="email" required placeholder="seu@email.com">
+        <input type="email" id="email" required placeholder="seu@email.com">
       </div>
       <div class="form-group">
         <label>Senha</label>
@@ -38,7 +48,19 @@
       <button type="submit" id="btnSubmit">Entrar</button>
     </form>
 
-    <button class="btn-guest" onclick="continueAsGuest()"><i class="fa-solid fa-user-secret"></i> Continuar como Convidado</button>
+    <div class="divider"><span>OU ENTRE COM</span></div>
+
+    <button type="button" class="social-btn" onclick="loginWithSocial('google')">
+      <i class="fa-brands fa-google" style="color: #ea4335;"></i> Continuar com Google
+    </button>
+    
+    <button type="button" class="social-btn" onclick="loginWithSocial('github')">
+      <i class="fa-brands fa-github"></i> Continuar com GitHub
+    </button>
+
+    <button type="button" class="btn-guest" onclick="continueAsGuest()">
+      <i class="fa-solid fa-user-secret"></i> Continuar como Convidado
+    </button>
 
     <div class="toggle-auth" onclick="toggleMode()">
       Não tem uma conta? <span id="toggleText">Cadastre-se</span>
@@ -59,8 +81,17 @@
       document.getElementById('toggleText').textContent = isSignUp ? 'Fazer Login' : 'Cadastre-se';
     }
 
+    async function loginWithSocial(provider) {
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: provider,
+        options: {
+          redirectTo: window.location.origin + '/Meow-List/index.html'
+        }
+      });
+      if (error) alert("Erro ao conectar com " + provider + ": " + error.message);
+    }
+
     function continueAsGuest() {
-      // Limpa qualquer sessão anterior se houver e redireciona para o início
       supabaseClient.auth.signOut();
       window.location.href = "index.html";
     }
@@ -79,7 +110,7 @@
         if (error) {
           alert("Erro no cadastro: " + error.message);
         } else {
-          alert("Cadastro realizado! Verifique seu e-mail se necessário ou faça login.");
+          alert("Conta criada com sucesso! Você já pode fazer login.");
           toggleMode();
         }
       } else {
