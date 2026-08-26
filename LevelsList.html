@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Meow List - Demonlist</title>
+  <title>Meow List - Levels</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -13,50 +13,52 @@
       --card-border: #1d2b45; 
       --text-main: #e2e8f0; 
       --accent-blue: #3b82f6; 
+      --accent-green: #22c55e;
       --text-muted: #8493a8; 
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
     body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; padding: 20px; display: flex; flex-direction: column; align-items: center; }
     
-    header { width: 100%; max-width: 700px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 1px solid var(--card-border); padding-bottom: 15px; }
-    h1 { font-size: 1.8rem; }
-    .auth-btn { background: var(--accent-blue); color: #fff; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-weight: bold; border: none; cursor: pointer; }
-    
-    .admin-panel { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 20px; width: 100%; max-width: 700px; margin-bottom: 30px; display: none; }
-    .admin-panel h3 { margin-bottom: 12px; font-size: 1.1rem; }
-    .form-row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
-    input { background: #0b111e; border: 1px solid var(--card-border); padding: 10px; border-radius: 6px; color: #fff; flex: 1; min-width: 140px; }
-    
-    .list-container { width: 100%; max-width: 700px; display: flex; flex-direction: column; gap: 12px; }
-    .level-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 16px; display: flex; align-items: center; gap: 15px; }
-    .level-rank { font-size: 1.4rem; font-weight: bold; color: var(--accent-blue); min-width: 45px; }
-    .level-name { font-size: 1.1rem; font-weight: 600; }
+    header { width: 100%; max-width: 900px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--card-border); padding-bottom: 15px; }
+    .header-actions { display: flex; gap: 10px; }
+    .btn-nav { background: var(--accent-blue); color: #fff; text-decoration: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
+    .btn-send { background: var(--accent-green); }
+
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; width: 100%; max-width: 900px; }
+    .tab-btn { flex: 1; padding: 12px; background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-muted); font-weight: bold; border-radius: 8px; cursor: pointer; text-align: center; }
+    .tab-btn.active { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+
+    .list-container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 14px; }
+    .level-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 16px; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+    .level-thumb { width: 100px; height: 60px; border-radius: 6px; object-fit: cover; border: 1px solid var(--card-border); background: #0b111e; }
+    .level-rank { font-size: 1.5rem; font-weight: bold; color: var(--accent-blue); min-width: 45px; text-align: center; }
+    .level-info { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+    .level-title { font-size: 1.2rem; font-weight: bold; }
+    .level-meta { font-size: 0.85rem; color: var(--text-muted); display: flex; gap: 12px; flex-wrap: wrap; }
+    .badge-nong { background: #9333ea; color: #fff; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+    .btn-video { background: #1e293b; color: var(--accent-blue); border: 1px solid var(--card-border); padding: 6px 10px; border-radius: 6px; text-decoration: none; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; font-weight: bold; }
   </style>
 </head>
 <body>
 
   <header>
-    <h1><i class="fa-solid fa-list-ol"></i> Meow List</h1>
-    <div id="authActions">
-      <a href="CadastroLogin.html" class="auth-btn" id="btnLogin">Entrar</a>
-      <button onclick="handleLogout()" class="auth-btn" id="btnLogout" style="display: none; background: #ef4444;">Sair</button>
+    <h1><i class="fa-solid fa-cat"></i> Meow List</h1>
+    <div class="header-actions">
+      <a href="EnviarLevel.html" class="btn-nav btn-send"><i class="fa-solid fa-paper-plane"></i> Enviar Nível</a>
+      <a href="AprovarLevel.html" class="btn-nav"><i class="fa-solid fa-shield-halved"></i> Moderação</a>
     </div>
   </header>
 
-  <!-- Painel visível apenas para usuários logados -->
-  <div class="admin-panel" id="adminPanel">
-    <h3>Adicionar Novo Level</h3>
-    <form id="addLevelForm">
-      <div class="form-row">
-        <input type="text" id="levelName" placeholder="Nome do Level" required>
-        <input type="number" id="levelPosition" placeholder="Posição (Ex: 1)" min="1" required>
-      </div>
-      <button type="submit" class="auth-btn" style="width: 100%;">Adicionar à Demonlist</button>
-    </form>
+  <!-- ABAS DA LISTA -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('LPDM')">LPDM</button>
+    <button class="tab-btn" onclick="switchTab('LIDM')">LIDM</button>
+    <button class="tab-btn" onclick="switchTab('LLBDM')">LLBDM</button>
   </div>
 
-  <main class="list-container" id="demonlistContainer">
-    <p style="text-align: center; color: var(--text-muted);">Carregando leveis...</p>
+  <!-- CONTEÚDO DA LISTA -->
+  <main class="list-container" id="listContainer">
+    <p style="text-align: center; color: var(--text-muted);">Carregando níveis...</p>
   </main>
 
   <script>
@@ -64,107 +66,54 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcHN5emRvaGhwcnhvcmF1ZGFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjQ3NjEsImV4cCI6MjEwMzAwMDc2MX0.1uQOWMpovDiDFUIYbJ-1bovwc7OjGd4PauCm5U34dlE";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Inicialização da página
+    let currentCategory = 'LPDM';
+
     document.addEventListener('DOMContentLoaded', () => {
-      checkAuthStatus();
-      loadDemonlist();
+      loadCategoryList(currentCategory);
     });
 
-    // Gerencia exibição de botões e formulário com base na autenticação
-    async function checkAuthStatus() {
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      const btnLogin = document.getElementById('btnLogin');
-      const btnLogout = document.getElementById('btnLogout');
-      const adminPanel = document.getElementById('adminPanel');
-
-      if (session) {
-        btnLogin.style.display = 'none';
-        btnLogout.style.display = 'inline-block';
-        adminPanel.style.display = 'block';
-      } else {
-        btnLogin.style.display = 'inline-block';
-        btnLogout.style.display = 'none';
-        adminPanel.style.display = 'none';
-      }
+    function switchTab(cat) {
+      currentCategory = cat;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      loadCategoryList(cat);
     }
 
-    async function handleLogout() {
-      await supabaseClient.auth.signOut();
-      window.location.reload();
-    }
-
-    // Carrega a lista do banco em ordem crescente de posição
-    async function loadDemonlist() {
-      const container = document.getElementById('demonlistContainer');
-      
+    async function loadCategoryList(cat) {
+      const container = document.getElementById('listContainer');
       const { data: levels, error } = await supabaseClient
         .from('levels')
         .select('*')
+        .eq('list_type', cat)
+        .eq('meow_status', 'approved')
         .order('position', { ascending: true });
 
-      if (error) {
-        container.innerHTML = `<p style="color: #ef4444;">Erro ao carregar a lista: ${error.message}</p>`;
-        return;
-      }
-
-      if (levels.length === 0) {
-        container.innerHTML = '<p style="text-align: center; color: var(--text-muted);">Nenhum level cadastrado ainda.</p>';
+      if (error || !levels || levels.length === 0) {
+        container.innerHTML = `<p style="text-align:center; color: var(--text-muted);">Nenhum nível aprovado nesta categoria ainda.</p>`;
         return;
       }
 
       container.innerHTML = '';
-      levels.forEach((lvl) => {
+      levels.forEach(lvl => {
         container.innerHTML += `
           <div class="level-card">
             <span class="level-rank">#${lvl.position}</span>
-            <span class="level-name">${lvl.name}</span>
+            <img src="${lvl.thumbnail_url || 'https://via.placeholder.com/100x60'}" class="level-thumb" alt="Thumbnail">
+            
+            <div class="level-info">
+              <span class="level-title">${lvl.name} <small style="font-weight:normal; font-size:0.85rem; color:var(--text-muted)">(ID: ${lvl.gd_id})</small></span>
+              <div class="level-meta">
+                <span><i class="fa-solid fa-pen-nib"></i> Criador: <b>${lvl.creator}</b></span>
+                <span><i class="fa-solid fa-check-double"></i> Verificador: <b>${lvl.verifier}</b></span>
+                ${lvl.has_nong ? `<span class="badge-nong"><i class="fa-solid fa-music"></i> NONG: ${lvl.nong_name || 'Sim'}</span>` : ''}
+              </div>
+            </div>
+
+            ${lvl.video_url ? `<a href="${lvl.video_url}" target="_blank" class="btn-video"><i class="fa-solid fa-play"></i> Vídeo</a>` : ''}
           </div>
         `;
       });
     }
-
-    // Adiciona o level e empurra os leveis abaixo para posições inferiores
-    document.getElementById('addLevelForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      
-      const name = document.getElementById('levelName').value.trim();
-      const targetPos = parseInt(document.getElementById('levelPosition').value, 10);
-      
-      if (!name || isNaN(targetPos) || targetPos < 1) return;
-
-      // 1. Seleciona todos os leveis que estão na posição informada ou abaixo dela
-      const { data: levelsToShift, error: fetchErr } = await supabaseClient
-        .from('levels')
-        .select('id, position')
-        .gte('position', targetPos);
-
-      if (fetchErr) {
-        alert("Erro ao verificar posições existentes: " + fetchErr.message);
-        return;
-      }
-
-      // 2. Incrementa em +1 a posição de cada um desses leveis
-      if (levelsToShift && levelsToShift.length > 0) {
-        for (const lvl of levelsToShift) {
-          await supabaseClient
-            .from('levels')
-            .update({ position: lvl.position + 1 })
-            .eq('id', lvl.id);
-        }
-      }
-
-      // 3. Insere o novo level na posição desejada
-      const { error: insertErr } = await supabaseClient
-        .from('levels')
-        .insert([{ name: name, position: targetPos }]);
-
-      if (insertErr) {
-        alert("Erro ao inserir level: " + insertErr.message);
-      } else {
-        document.getElementById('addLevelForm').reset();
-        loadDemonlist();
-      }
-    });
   </script>
 </body>
 </html>

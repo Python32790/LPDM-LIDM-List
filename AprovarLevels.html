@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gerenciar Levels - Meow List</title>
+  <title>Painel Mod/Admin - Meow List</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
@@ -14,198 +14,178 @@
       --text-main: #e2e8f0; 
       --accent-blue: #3b82f6; 
       --accent-red: #ef4444; 
-      --accent-green: #22c55e;
+      --accent-green: #22c55e; 
       --text-muted: #8493a8; 
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
     body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; padding: 20px; display: flex; flex-direction: column; align-items: center; }
     
-    header { width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid var(--card-border); padding-bottom: 15px; }
-    h1 { font-size: 1.6rem; }
-    a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; }
-    a:hover { color: #fff; }
-
-    .list-container { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 12px; }
-    .level-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 16px; display: flex; align-items: center; justify-content: space-between; gap: 15px; flex-wrap: wrap; }
+    header { width: 100%; max-width: 900px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--card-border); padding-bottom: 15px; }
     
-    .level-info { display: flex; align-items: center; gap: 15px; }
-    .level-rank { font-size: 1.3rem; font-weight: bold; color: var(--accent-blue); min-width: 45px; }
-    .level-name { font-size: 1.1rem; font-weight: 600; }
+    .tabs { display: flex; gap: 10px; margin-bottom: 20px; width: 100%; max-width: 900px; }
+    .tab-btn { flex: 1; padding: 12px; background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-muted); font-weight: bold; border-radius: 8px; cursor: pointer; text-align: center; }
+    .tab-btn.active { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
 
-    .actions { display: flex; align-items: center; gap: 10px; }
-    .input-pos { background: #0b111e; border: 1px solid var(--card-border); color: #fff; padding: 6px 10px; border-radius: 6px; width: 70px; text-align: center; font-weight: bold; }
-    .btn-action { padding: 8px 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; color: #fff; display: flex; align-items: center; gap: 6px; font-size: 0.85rem; }
-    .btn-move { background: var(--accent-blue); }
-    .btn-move:hover { background: #2563eb; }
+    .list-container { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .level-thumb { width: 80px; height: 50px; border-radius: 4px; object-fit: cover; }
+    
+    .actions { display: flex; align-items: center; gap: 8px; }
+    input.pos-input { background: #0b111e; border: 1px solid var(--card-border); color: #fff; padding: 6px; border-radius: 4px; width: 60px; text-align: center; font-weight: bold; }
+    button { padding: 8px 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer; color: #fff; display: inline-flex; align-items: center; gap: 4px; }
+    .btn-approve { background: var(--accent-green); }
     .btn-delete { background: var(--accent-red); }
-    .btn-delete:hover { background: #dc2626; }
-    
-    .unauthorized { text-align: center; color: var(--accent-red); margin-top: 40px; display: none; }
+    .btn-move { background: var(--accent-blue); }
   </style>
 </head>
 <body>
 
   <header>
-    <h1><i class="fa-solid fa-sliders"></i> Gerenciador de Demonlist</h1>
-    <a href="index.html"><i class="fa-solid fa-arrow-left"></i> Voltar ao Inicio</a>
+    <h1>Painel Mod/Admin</h1>
+    <a href="LevelsList.html" style="color: var(--text-muted); text-decoration: none;">← Voltar às Listas</a>
   </header>
 
-  <div id="unauthorizedMsg" class="unauthorized">
-    <h2>Acesso Negado</h2>
-    <p>Você precisa estar logado para acessar esta página.</p>
+  <!-- ABAS MOD/ADMIN -->
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchAdminTab('pending')">Aprovar Níveis</button>
+    <button class="tab-btn" onclick="switchAdminTab('approved')">Gerenciar Níveis Aprovados</button>
   </div>
 
-  <main class="list-container" id="adminListContainer">
-    <p style="text-align: center; color: var(--text-muted);">Carregando leveis...</p>
-  </main>
+  <main class="list-container" id="adminContainer"></main>
 
   <script>
     const SUPABASE_URL = "https://cspsyzdohhprxoraudap.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcHN5emRvaGhwcnhvcmF1ZGFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjQ3NjEsImV4cCI6MjEwMzAwMDc2MX0.1uQOWMpovDiDFUIYbJ-1bovwc7OjGd4PauCm5U34dlE";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      if (!session) {
-        document.getElementById('adminListContainer').style.display = 'none';
-        document.getElementById('unauthorizedMsg').style.display = 'block';
-        return;
-      }
-      loadAdminList();
+    let currentTab = 'pending';
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadAdminView(currentTab);
     });
 
-    // Renderiza a lista com inputs para mudar o Top
-    async function loadAdminList() {
-      const container = document.getElementById('adminListContainer');
-      
+    function switchAdminTab(status) {
+      currentTab = status;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.classList.add('active');
+      loadAdminView(status);
+    }
+
+    async function loadAdminView(status) {
+      const container = document.getElementById('adminContainer');
       const { data: levels, error } = await supabaseClient
         .from('levels')
         .select('*')
+        .eq('meow_status', status)
         .order('position', { ascending: true });
 
-      if (error) {
-        container.innerHTML = `<p style="color: var(--accent-red);">Erro: ${error.message}</p>`;
-        return;
-      }
-
-      if (levels.length === 0) {
-        container.innerHTML = '<p style="text-align: center; color: var(--text-muted);">Nenhum level para gerenciar.</p>';
+      if (error || !levels || levels.length === 0) {
+        container.innerHTML = `<p style="text-align:center; color: var(--text-muted);">Nenhum nível nesta seção.</p>`;
         return;
       }
 
       container.innerHTML = '';
-      levels.forEach((lvl) => {
-        container.innerHTML += `
-          <div class="level-card">
-            <div class="level-info">
-              <span class="level-rank">#${lvl.position}</span>
-              <span class="level-name">${lvl.name}</span>
+      levels.forEach(lvl => {
+        if (status === 'pending') {
+          // ABA 1: APROVAR NÍVEIS
+          container.innerHTML += `
+            <div class="card">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <img src="${lvl.thumbnail_url || 'https://via.placeholder.com/80x50'}" class="level-thumb">
+                <div>
+                  <strong>${lvl.name}</strong> <span style="font-size:0.85rem; color:var(--accent-blue)">[${lvl.list_type}]</span><br>
+                  <small style="color:var(--text-muted)">Por: ${lvl.creator} | Verificador: ${lvl.verifier}</small>
+                </div>
+              </div>
+              <div class="actions">
+                <input type="number" id="pos-${lvl.id}" class="pos-input" placeholder="Top #" min="1" value="1">
+                <button class="btn-approve" onclick="approveLevel('${lvl.id}', '${lvl.list_type}')"><i class="fa-solid fa-check"></i> Aprovar</button>
+                <button class="btn-delete" onclick="rejectLevel('${lvl.id}')"><i class="fa-solid fa-xmark"></i> Recusar</button>
+              </div>
             </div>
-            
-            <div class="actions">
-              <label style="font-size:0.8rem; color: var(--text-muted);">Mudar Top:</label>
-              <input type="number" id="pos-${lvl.id}" class="input-pos" value="${lvl.position}" min="1">
-              
-              <button class="btn-action btn-move" onclick="updateLevelPosition('${lvl.id}', ${lvl.position})">
-                <i class="fa-solid fa-check"></i> Salvar Top
-              </button>
-              
-              <button class="btn-action btn-delete" onclick="deleteLevel('${lvl.id}', ${lvl.position})">
-                <i class="fa-solid fa-trash"></i> Remover
-              </button>
+          `;
+        } else {
+          // ABA 2: GERENCIAR NÍVEIS APROVADOS (MOVER TOP OU REMOVER)
+          container.innerHTML += `
+            <div class="card">
+              <div style="display:flex; align-items:center; gap:12px;">
+                <strong style="color:var(--accent-blue); font-size:1.2rem;">#${lvl.position}</strong>
+                <img src="${lvl.thumbnail_url || 'https://via.placeholder.com/80x50'}" class="level-thumb">
+                <div>
+                  <strong>${lvl.name}</strong> <span style="font-size:0.85rem; color:var(--text-muted)">[${lvl.list_type}]</span><br>
+                  <small style="color:var(--text-muted)">ID GD: ${lvl.gd_id}</small>
+                </div>
+              </div>
+              <div class="actions">
+                <input type="number" id="pos-${lvl.id}" class="pos-input" value="${lvl.position}" min="1">
+                <button class="btn-move" onclick="changePosition('${lvl.id}', ${lvl.position}, '${lvl.list_type}')"><i class="fa-solid fa-floppy-disk"></i> Salvar Top</button>
+                <button class="btn-delete" onclick="removeApproved('${lvl.id}', ${lvl.position}, '${lvl.list_type}')"><i class="fa-solid fa-trash"></i> Remover</button>
+              </div>
             </div>
-          </div>
-        `;
+          `;
+        }
       });
     }
 
-    // ALTERAR O TOP (POSIÇÃO) DO LEVEL
-    async function updateLevelPosition(id, oldPos) {
-      const inputEl = document.getElementById(`pos-${id}`);
-      const newPos = parseInt(inputEl.value, 10);
+    // APROVAR NÍVEL E REBAIXAR OS OUTROS DA MESMA CATEGORIA
+    async function approveLevel(id, category) {
+      const targetPos = parseInt(document.getElementById(`pos-${id}`).value, 10);
+      if (isNaN(targetPos) || targetPos < 1) return;
 
-      if (isNaN(newPos) || newPos < 1 || newPos === oldPos) return;
-
-      if (newPos < oldPos) {
-        // O level subiu de posição (ex: era #5, virou #2)
-        // Leveis entre a newPos e a oldPos-1 sobem +1 na posição numérica
-        const { data: affected } = await supabaseClient
-          .from('levels')
-          .select('id, position')
-          .gte('position', newPos)
-          .lt('position', oldPos);
-
-        if (affected) {
-          for (const item of affected) {
-            await supabaseClient
-              .from('levels')
-              .update({ position: item.position + 1 })
-              .eq('id', item.id);
-          }
-        }
-      } else {
-        // O level desceu de posição (ex: era #2, virou #5)
-        // Leveis entre oldPos+1 e newPos descem -1 na posição numérica
-        const { data: affected } = await supabaseClient
-          .from('levels')
-          .select('id, position')
-          .gt('position', oldPos)
-          .lte('position', newPos);
-
-        if (affected) {
-          for (const item of affected) {
-            await supabaseClient
-              .from('levels')
-              .update({ position: item.position - 1 })
-              .eq('id', item.id);
-          }
-        }
-      }
-
-      // Atualiza o level selecionado para a nova posição
-      const { error } = await supabaseClient
-        .from('levels')
-        .update({ position: newPos })
-        .eq('id', id);
-
-      if (error) {
-        alert("Erro ao alterar posição: " + error.message);
-      } else {
-        loadAdminList();
-      }
-    }
-
-    // REMOVER LEVEL E REAJUSTAR OS OUTROS
-    async function deleteLevel(id, currentPos) {
-      if (!confirm("Tem certeza que deseja remover este level da Demonlist?")) return;
-
-      // 1. Apaga o level
-      const { error: delErr } = await supabaseClient
-        .from('levels')
-        .delete()
-        .eq('id', id);
-
-      if (delErr) {
-        alert("Erro ao remover level: " + delErr.message);
-        return;
-      }
-
-      // 2. Reajusta todos os leveis que estavam abaixo dele (-1 na posição)
       const { data: toShift } = await supabaseClient
         .from('levels')
         .select('id, position')
-        .gt('position', currentPos);
+        .eq('list_type', category)
+        .eq('meow_status', 'approved')
+        .gte('position', targetPos);
 
       if (toShift) {
         for (const item of toShift) {
-          await supabaseClient
-            .from('levels')
-            .update({ position: item.position - 1 })
-            .eq('id', item.id);
+          await supabaseClient.from('levels').update({ position: item.position + 1 }).eq('id', item.id);
         }
       }
 
-      loadAdminList();
+      await supabaseClient.from('levels').update({ meow_status: 'approved', position: targetPos }).eq('id', id);
+      loadAdminView('pending');
+    }
+
+    // RECUSAR NÍVEL PENDENTE
+    async function rejectLevel(id) {
+      await supabaseClient.from('levels').delete().eq('id', id);
+      loadAdminView('pending');
+    }
+
+    // ALTERAR O TOP NO GERENCIADOR
+    async function changePosition(id, oldPos, category) {
+      const newPos = parseInt(document.getElementById(`pos-${id}`).value, 10);
+      if (isNaN(newPos) || newPos === oldPos) return;
+
+      if (newPos < oldPos) {
+        const { data: affected } = await supabaseClient.from('levels').select('id, position').eq('list_type', category).eq('meow_status', 'approved').gte('position', newPos).lt('position', oldPos);
+        if (affected) {
+          for (const item of affected) await supabaseClient.from('levels').update({ position: item.position + 1 }).eq('id', item.id);
+        }
+      } else {
+        const { data: affected } = await supabaseClient.from('levels').select('id, position').eq('list_type', category).eq('meow_status', 'approved').gt('position', oldPos).lte('position', newPos);
+        if (affected) {
+          for (const item of affected) await supabaseClient.from('levels').update({ position: item.position - 1 }).eq('id', item.id);
+        }
+      }
+
+      await supabaseClient.from('levels').update({ position: newPos }).eq('id', id);
+      loadAdminView('approved');
+    }
+
+    // REMOVER NÍVEL APROVADO E REAJUSTAR
+    async function removeApproved(id, currentPos, category) {
+      if (!confirm("Remover este nível aprovado?")) return;
+      await supabaseClient.from('levels').delete().eq('id', id);
+
+      const { data: toShift } = await supabaseClient.from('levels').select('id, position').eq('list_type', category).eq('meow_status', 'approved').gt('position', currentPos);
+      if (toShift) {
+        for (const item of toShift) await supabaseClient.from('levels').update({ position: item.position - 1 }).eq('id', item.id);
+      }
+      loadAdminView('approved');
     }
   </script>
 </body>
