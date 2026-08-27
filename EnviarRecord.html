@@ -91,7 +91,7 @@
       select.innerHTML = '<option value="" disabled selected>Selecione um nível...</option>';
       levels.forEach(lvl => {
         const option = document.createElement('option');
-        option.value = lvl.id; // Garante que o valor enviado é o UUID do nível
+        option.value = lvl.id;
         option.textContent = `${lvl.name} por ${lvl.creator}`;
         select.appendChild(option);
       });
@@ -101,12 +101,13 @@
       e.preventDefault();
       
       const btn = document.getElementById('btnSubmit');
-      const levelId = document.getElementById('levelSelect').value;
-      const playerName = document.getElementById('playerName').value.trim();
-      const progress = parseInt(document.getElementById('progress').value, 10);
-      const videoUrl = document.getElementById('videoUrl').value.trim();
+      
+      const selectedLevelId = document.getElementById('levelSelect').value;
+      const inputPlayerName = document.getElementById('playerName').value.trim();
+      const inputProgress = parseInt(document.getElementById('progress').value, 10);
+      const inputVideoUrl = document.getElementById('videoUrl').value.trim();
 
-      if (!levelId) {
+      if (!selectedLevelId) {
         alert("Por favor, selecione um nível válido.");
         return;
       }
@@ -114,17 +115,17 @@
       btn.disabled = true;
       btn.textContent = "Enviando record...";
 
+      const payload = {
+        level_id: selectedLevelId,
+        player_name: inputPlayerName,
+        progress: inputProgress,
+        video_url: inputVideoUrl,
+        submitted_by: loggedUserId
+      };
+
       const { error } = await supabaseClient
         .from('records')
-        .insert([
-          {
-            level_id: levelId,
-            player_name: playerName,
-            progress: progress,
-            video_url: videoUrl,
-            submitted_by: loggedUserId
-          }
-        ]);
+        .insert([payload]);
 
       if (error) {
         alert("Erro ao enviar: " + error.message);
