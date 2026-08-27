@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stats Viewer - Meow List</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root { 
+      --bg-color: #0b111e; 
+      --card-bg: #131c2e; 
+      --card-border: #1d2b45; 
+      --text-main: #e2e8f0; 
+      --accent-blue: #3b82f6; 
+      --accent-green: #22c55e;
+      --text-muted: #8493a8; 
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+    
+    header { width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--card-border); padding-bottom: 15px; }
+    .btn-back { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; }
+    
+    .search-box { width: 100%; max-width: 800px; margin-bottom: 20px; }
+    .search-box input { width: 100%; padding: 12px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; color: #fff; font-size: 1rem; }
+    
+    .stats-container { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 10px; }
+    .player-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 16px; display: flex; justify-content: space-between; align-items: center; }
+    .player-rank { font-size: 1.2rem; font-weight: bold; color: var(--accent-blue); min-width: 45px; }
+    .player-info { display: flex; align-items: center; gap: 15px; flex: 1; }
+    .player-stats { text-align: right; }
+    .points { font-size: 1.1rem; font-weight: bold; color: var(--accent-green); }
+    .beaten { font-size: 0.85rem; color: var(--text-muted); }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1><i class="fa-solid fa-trophy"></i> Stats Viewer</h1>
+    <a href="LevelsList.html" class="btn-back">← Voltar às Listas</a>
+  </header>
+
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Pesquisar jogador..." oninput="filterPlayers()">
+  </div>
+
+  <main class="stats-container" id="statsContainer">
+    <p style="text-align: center; color: var(--text-muted);">Carregando estatísticas...</p>
+  </main>
+
+  <script>
+    const SUPABASE_URL = "https://cspsyzdohhprxoraudap.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcHN5emRvaGhwcnhvcmF1ZGFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjQ3NjEsImV4cCI6MjEwMzAwMDc2MX0.1uQOWMpovDiDFUIYbJ-1bovwc7OjGd4PauCm5U34dlE";
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let allPlayers = [];
+
+    document.addEventListener('DOMContentLoaded', loadStats);
+
+    async function loadStats() {
+      const container = document.getElementById('statsContainer');
+      
+      const { data: stats, error } = await supabaseClient
+        .from('leaderboard')
+        .select('*');
+
+      if (error || !stats || stats.length === 0) {
+        container.innerHTML = `<p style="text-align:center; color: var(--text-muted);">Nenhum dado de jogador disponível ainda.</p>`;
+        return;
+      }
+
+      allPlayers = stats;
+      renderPlayers(allPlayers);
+    }
+
+    function renderPlayers(players) {
+      const container = document.getElementById('statsContainer');
+      container.innerHTML = '';
+
+      players.forEach((player, index) => {
+        container.innerHTML += `
+          <div class="player-card">
+            <div class="player-info">
+              <span class="player-rank">#${index + 1}</span>
+              <strong>${player.player_name}</strong>
+            </div>
+            <div class="player-stats">
+              <div class="points">${player.total_points} pts</div>
+              <div class="beaten">${player.total_beaten} leveis completados</div>
+            </div>
+          </div>
+        `;
+      });
+    }
+
+    function filterPlayers() {
+      const query = document.getElementById('searchInput').value.toLowerCase();
+      const filtered = allPlayers.filter(p => p.player_name.toLowerCase().includes(query));
+      renderPlayers(filtered);
+    }
+  </script>
+</body>
+</html>
