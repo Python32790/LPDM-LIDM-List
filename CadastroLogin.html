@@ -42,8 +42,8 @@
         <input type="text" id="username" placeholder="Seu nome de usuário">
       </div>
 
-      <div class="form-group">
-        <label id="loginInputLabel">E-mail ou Nome de Usuário</label>
+      <div class="form-group" id="loginInputGroup">
+        <label>E-mail ou Nome de Usuário</label>
         <input type="text" id="loginInput" required placeholder="seu@email.com ou UsuarioGD">
       </div>
 
@@ -94,7 +94,7 @@
 
       const usernameGroup = document.getElementById('signupUsernameGroup');
       const emailGroup = document.getElementById('signupEmailGroup');
-      const loginInputGroup = document.getElementById('loginInput').parentElement;
+      const loginInputGroup = document.getElementById('loginInputGroup');
       const loginInput = document.getElementById('loginInput');
       const signupEmail = document.getElementById('signupEmail');
       const usernameInput = document.getElementById('username');
@@ -159,7 +159,8 @@
           if (data.user) {
             await supabaseClient.from('profiles').upsert({
               id: data.user.id,
-              username: username
+              username: username,
+              email: email
             });
           }
           alert("Conta criada com sucesso! Você já pode fazer login.");
@@ -169,30 +170,22 @@
         const loginVal = document.getElementById('loginInput').value.trim();
         let targetEmail = loginVal;
 
-        // Se o usuário digitou um nome de usuário em vez de e-mail, busca o e-mail correspondente
+        // Se a entrada não for um e-mail, busca o e-mail na tabela de perfis
         if (!loginVal.includes('@')) {
-          const { data: profile } = await supabaseClient
+          const { data: profile, error: profileErr } = await supabaseClient
             .from('profiles')
-            .select('id')
+            .select('email')
             .ilike('username', loginVal)
             .single();
 
-          if (!profile) {
-            alert("Nome de usuário não encontrado.");
+          if (profileErr || !profile || !profile.email) {
+            alert("Nome de usuário não encontrado ou sem e-mail vinculado.");
             btn.disabled = false;
             btn.textContent = 'Entrar';
             return;
           }
 
-          // Busca o e-mail nas RPCs do Supabase ou usa o metadado
-          const { data: userData, error: userError } = await supabaseClient
-            .from('profiles')
-            .select('username')
-            .eq('id', profile.id)
-            .single();
-
-          // Como o auth requer e-mail, tentamos efetuar login procurando pela chave e-mail vinculada se gravada
-          // Alternativa de fallback: tentar buscar por metadados na rpc se disponível, senão obriga o login por email
+          targetEmail = profile.email;
         }
 
         const { data, error } = await supabaseClient.auth.signInWithPassword({ 
@@ -201,7 +194,7 @@
         });
 
         if (error) {
-          alert("Erro ao entrar: Verifique seu e-mail/usuário e senha.");
+          alert("Erro ao entrar: Verifique suas credenciais e tente novamente.");
         } else {
           alert("Login realizado com sucesso!");
           window.location.href = "index.html";
