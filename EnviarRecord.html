@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enviar Record - Meow List</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    :root { --bg-color: #0b111e; --card-bg: #131c2e; --card-border: #1d2b45; --text-main: #e2e8f0; --accent-blue: #3b82f6; --text-muted: #8493a8; --danger-red: #ef4444; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
+    body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+    .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; width: 100%; max-width: 500px; padding: 28px; margin-top: 20px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+    label { font-size: 0.9rem; color: var(--text-muted); font-weight: 600; }
+    input, select { background: #0b111e; border: 1px solid var(--card-border); padding: 10px; border-radius: 6px; color: #fff; font-size: 0.95rem; width: 100%; }
+    button { background: var(--accent-blue); color: #fff; border: none; padding: 12px; border-radius: 6px; font-weight: bold; cursor: pointer; width: 100%; margin-top: 10px; font-size: 1rem; }
+    a { color: var(--text-muted); text-decoration: none; font-size: 0.85rem; display: inline-block; margin-bottom: 15px; }
+    .auth-error { background: #451a1a; border: 1px solid var(--danger-red); color: #f87171; padding: 12px; border-radius: 6px; margin-bottom: 15px; font-size: 0.9rem; display: none; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <a href="index.html"><i class="fa-solid fa-arrow-left"></i> Voltar ao Início</a>
+    <h2><i class="fa-solid fa-trophy"></i> Enviar Record / Completion</h2>
+
+    <div id="authAlert" class="auth-error">
+      <i class="fa-solid fa-lock"></i> Você precisa estar logado com uma conta com e-mail verificado para enviar records. <a href="CadastroLogin.html" style="color: var(--accent-blue); text-decoration: underline; margin: 0;">Entrar/Cadastrar</a>
+    </div>
+
+    <form id="recordForm" style="margin-top: 15px;">
+      <div class="form-group">
+        <label>Selecione o Nível da Lista</label>
+        <select id="levelSelect" required>
+          <option value="">Carregando níveis aprovados...</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Nome do Jogador no GD</label>
+        <input type="text" id="playerName" required placeholder="Ex: ItsMeTennaGD">
+      </div>
+
+      <div class="form-group">
+        <label>Porcentagem / Progressão (%)</label>
+        <input type="number" id="progress" min="1" max="100" required placeholder="Ex: 100 para Completion ou 80 para Record">
+      </div>
+
+      <div class="form-group">
+        <label>Link do Vídeo de Prova</label>
+        <input type="url" id="videoUrl" required placeholder="Ex: https://youtube.com/watch?v=... ou Twitch/TikTok/Medal">
+      </div>
+
+      <button type="submit" id="btnSubmit"><i class="fa-solid fa-paper-plane"></i> Enviar Record</button>
+    </form>
+  </div>
+
+  <script>
+    const SUPABASE_URL = "https://cspsyzdohhprxoraudap.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcHN5emRvaGhwcnhvcmF1ZGFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjQ3NjEsImV4cCI6MjEwMzAwMDc2MX0.1uQOWMpovDiDFUIYbJ-1bovwc7OjGd4PauCm5U34dlE";
+    const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let currentUser = null;
+
+    async function initPage() {
+      const { data: { session } } = await supabaseClient.auth.getSession();
+      
+      // Checa login e e-mail verificado
+      if (!session || !session.user.email_confirmed_at) {
+        document.getElementById('authAlert').style.display = 'block';
+        document.getElementById('recordForm').style.display = 'none';
+        return;
+      }
+
+      currentUser = session.user;
+      loadApprovedLevels();
+    }
+
+    async function loadApprovedLevels() {
+      const select = document.getElementById('levelSelect');
+      const { data: levels, error } = await supabaseClient
+        .from('levels')
+        .select('id, name, creator, list_type')
+        .eq('meow_status', 'approved')
+        .order('name');
+
+      if (error || !levels || levels.length === 0) {
+        select.innerHTML = `<option value="">Nenhum nível aprovado encontrado na lista.</option>`;
+        return;
+      }
+
+      select.innerHTML = '<option value="">-- Escolha um nível --</option>';
+      levels.forEach(lvl => {
+        select.innerHTML += `<option value="${lvl.id}">${lvl.name} por ${lvl.creator} [${lvl.list_type}]</option>`;
+      });
+    }
+
+    function isValidVideoUrl(url) {
+      const videoDomains = ['youtube.com', 'youtu.be', 'tiktok.com', 'instagram.com', 'facebook.com', 'medal.tv', 'twitch.tv', 'bilibili.com', 'twitter.com', 'x.com'];
+      try {
+        const parsed = new URL(url);
+        return videoDomains.some(domain => parsed.hostname.includes(domain));
+      } catch {
+        return false;
+      }
+    }
+
+    document.getElementById('recordForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
+      const levelId = document.getElementById('levelSelect').value;
+      const playerName = document.getElementById('playerName').value.trim();
+      const progress = parseInt(document.getElementById('progress').value, 10);
+      const videoUrl = document.getElementById('videoUrl').value.trim();
+      const btn = document.getElementById('btnSubmit');
+
+      if (!levelId) { alert("Selecione um nível válido."); return; }
+      if (!isValidVideoUrl(videoUrl)) {
+        alert("Insira um link de vídeo válido (YouTube, TikTok, Medal, Twitch, Instagram, etc).");
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "Enviando record...";
+
+      try {
+        const { error } = await supabaseClient.from('records').insert({
+          level_id: levelId,
+          player_name: playerName,
+          progress: progress,
+          video_url: videoUrl,
+          submitted_by: currentUser.id,
+          status: 'pending'
+        });
+
+        if (error) throw error;
+
+        alert("Record enviado com sucesso! Aguarde a moderação analisar.");
+        this.reset();
+      } catch (err) {
+        alert("Erro ao enviar: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Enviar Record';
+      }
+    });
+
+    initPage();
+  </script>
+</body>
+</html>

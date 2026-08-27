@@ -7,38 +7,26 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    :root { 
-      --bg-color: #0b111e; 
-      --card-bg: #131c2e; 
-      --card-border: #1d2b45; 
-      --text-main: #e2e8f0; 
-      --accent-blue: #3b82f6; 
-      --accent-green: #22c55e;
-      --text-muted: #8493a8; 
-    }
+    :root { --bg-color: #0b111e; --card-bg: #131c2e; --card-border: #1d2b45; --text-main: #e2e8f0; --accent-blue: #3b82f6; --accent-green: #22c55e; --text-muted: #8493a8; }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
     body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-    
-    header { width: 100%; max-width: 800px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--card-border); padding-bottom: 15px; }
-    .btn-back { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; }
-    
-    .search-box { width: 100%; max-width: 800px; margin-bottom: 20px; }
+    header { width: 100%; max-width: 850px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--card-border); padding-bottom: 15px; }
+    .search-box { width: 100%; max-width: 850px; margin-bottom: 20px; }
     .search-box input { width: 100%; padding: 12px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; color: #fff; font-size: 1rem; }
-    
-    .stats-container { width: 100%; max-width: 800px; display: flex; flex-direction: column; gap: 10px; }
-    .player-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; padding: 16px; display: flex; justify-content: space-between; align-items: center; }
-    .player-rank { font-size: 1.2rem; font-weight: bold; color: var(--accent-blue); min-width: 45px; }
-    .player-info { display: flex; align-items: center; gap: 15px; flex: 1; }
-    .player-stats { text-align: right; }
-    .points { font-size: 1.1rem; font-weight: bold; color: var(--accent-green); }
-    .beaten { font-size: 0.85rem; color: var(--text-muted); }
+    .stats-container { width: 100%; max-width: 850px; display: flex; flex-direction: column; gap: 14px; }
+    .player-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
+    .player-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); padding-bottom: 10px; }
+    .player-name { font-size: 1.2rem; font-weight: bold; color: var(--accent-blue); }
+    .records-list { list-style: none; display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
+    .record-item { background: #0b111e; border: 1px solid var(--card-border); padding: 10px 14px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; flex-wrap: wrap; gap: 6px; }
+    .record-item a { color: var(--accent-blue); text-decoration: none; font-weight: bold; }
   </style>
 </head>
 <body>
 
   <header>
-    <h1><i class="fa-solid fa-trophy"></i> Stats Viewer</h1>
-    <a href="LevelsList.html" class="btn-back">← Voltar às Listas</a>
+    <h1><i class="fa-solid fa-chart-simple"></i> Stats Viewer</h1>
+    <a href="index.html" style="color: var(--text-muted); text-decoration: none;">← Voltar ao Início</a>
   </header>
 
   <div class="search-box">
@@ -54,41 +42,70 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcHN5emRvaGhwcnhvcmF1ZGFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjQ3NjEsImV4cCI6MjEwMzAwMDc2MX0.1uQOWMpovDiDFUIYbJ-1bovwc7OjGd4PauCm5U34dlE";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    let allPlayers = [];
+    let allPlayersData = [];
 
     document.addEventListener('DOMContentLoaded', loadStats);
 
     async function loadStats() {
       const container = document.getElementById('statsContainer');
-      
-      const { data: stats, error } = await supabaseClient
-        .from('leaderboard')
-        .select('*');
 
-      if (error || !stats || stats.length === 0) {
-        container.innerHTML = `<p style="text-align:center; color: var(--text-muted);">Nenhum dado de jogador disponível ainda.</p>`;
+      // Busca records aprovados trazendo os detalhes do nível
+      const { data: records, error } = await supabaseClient
+        .from('records')
+        .select('*, levels(name, creator, gd_id)')
+        .eq('status', 'approved');
+
+      if (error || !records || records.length === 0) {
+        container.innerHTML = `<p style="text-align:center; color: var(--text-muted);">Nenhum record/completion aprovado no momento.</p>`;
         return;
       }
 
-      allPlayers = stats;
-      renderPlayers(allPlayers);
+      // Agrupa por jogador
+      const playersMap = {};
+      records.forEach(rec => {
+        if (!playersMap[rec.player_name]) playersMap[rec.player_name] = [];
+        playersMap[rec.player_name].push(rec);
+      });
+
+      allPlayersData = Object.keys(playersMap).map(name => ({
+        name: name,
+        records: playersMap[name]
+      }));
+
+      renderPlayers(allPlayersData);
     }
 
     function renderPlayers(players) {
       const container = document.getElementById('statsContainer');
       container.innerHTML = '';
 
-      players.forEach((player, index) => {
+      players.forEach(p => {
+        let recordsHtml = '';
+        p.records.forEach(r => {
+          const lvlName = r.levels ? r.levels.name : 'Nível Removido';
+          const creator = r.levels ? r.levels.creator : 'Desconhecido';
+          const gdId = r.levels ? r.levels.gd_id : '?';
+
+          recordsHtml += `
+            <li class="record-item">
+              <div>
+                <strong>${lvlName}${r.progress}%</strong> 
+                <span style="color:var(--text-muted); font-size:0.8rem;">(Criador: ${creator} \vert{} ID:${gdId})</span>
+              </div>
+              <a href="${r.video_url}" target="_blank"><i class="fa-solid fa-play"></i> Ver Prova</a>
+            </li>
+          `;
+        });
+
         container.innerHTML += `
           <div class="player-card">
-            <div class="player-info">
-              <span class="player-rank">#${index + 1}</span>
-              <strong>${player.player_name}</strong>
+            <div class="player-header">
+              <span class="player-name"><i class="fa-solid fa-user"></i> ${p.name}</span>
+              <span style="color:var(--text-muted); font-size:0.85rem;">${p.records.length} record(s)</span>
             </div>
-            <div class="player-stats">
-              <div class="points">${player.total_points} pts</div>
-              <div class="beaten">${player.total_beaten} leveis completados</div>
-            </div>
+            <ul class="records-list">
+              ${recordsHtml}
+            </ul>
           </div>
         `;
       });
@@ -96,7 +113,7 @@
 
     function filterPlayers() {
       const query = document.getElementById('searchInput').value.toLowerCase();
-      const filtered = allPlayers.filter(p => p.player_name.toLowerCase().includes(query));
+      const filtered = allPlayersData.filter(p => p.name.toLowerCase().includes(query));
       renderPlayers(filtered);
     }
   </script>
