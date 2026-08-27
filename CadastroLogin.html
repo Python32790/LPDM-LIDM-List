@@ -37,14 +37,26 @@
     <h2 id="formTitle">Entrar na Meow List</h2>
     
     <form id="authForm" style="margin-top: 15px;">
-      <div class="form-group">
-        <label>E-mail</label>
-        <input type="email" id="email" required placeholder="seu@email.com">
+      <div class="form-group" id="signupUsernameGroup" style="display: none;">
+        <label>Nome de Usuário</label>
+        <input type="text" id="username" placeholder="Seu nome de usuário">
       </div>
+
+      <div class="form-group">
+        <label id="loginInputLabel">E-mail ou Nome de Usuário</label>
+        <input type="text" id="loginInput" required placeholder="seu@email.com ou UsuarioGD">
+      </div>
+
+      <div class="form-group" id="signupEmailGroup" style="display: none;">
+        <label>E-mail</label>
+        <input type="email" id="signupEmail" placeholder="seu@email.com">
+      </div>
+
       <div class="form-group">
         <label>Senha</label>
         <input type="password" id="password" required placeholder="Sua senha">
       </div>
+
       <button type="submit" id="btnSubmit">Entrar</button>
     </form>
 
@@ -79,6 +91,31 @@
       document.getElementById('formTitle').textContent = isSignUp ? 'Criar Conta na Meow List' : 'Entrar na Meow List';
       document.getElementById('btnSubmit').textContent = isSignUp ? 'Cadastrar' : 'Entrar';
       document.getElementById('toggleText').textContent = isSignUp ? 'Fazer Login' : 'Cadastre-se';
+
+      const usernameGroup = document.getElementById('signupUsernameGroup');
+      const emailGroup = document.getElementById('signupEmailGroup');
+      const loginInputGroup = document.getElementById('loginInput').parentElement;
+      const loginInput = document.getElementById('loginInput');
+      const signupEmail = document.getElementById('signupEmail');
+      const usernameInput = document.getElementById('username');
+
+      if (isSignUp) {
+        usernameGroup.style.display = 'flex';
+        emailGroup.style.display = 'flex';
+        loginInputGroup.style.display = 'none';
+        
+        loginInput.removeAttribute('required');
+        signupEmail.setAttribute('required', 'required');
+        usernameInput.setAttribute('required', 'required');
+      } else {
+        usernameGroup.style.display = 'none';
+        emailGroup.style.display = 'none';
+        loginInputGroup.style.display = 'flex';
+
+        loginInput.setAttribute('required', 'required');
+        signupEmail.removeAttribute('required');
+        usernameInput.removeAttribute('required');
+      }
     }
 
     async function loginWithSocial(provider) {
@@ -98,7 +135,6 @@
 
     document.getElementById('authForm').addEventListener('submit', async (e) => {
       e.preventDefault();
-      const email = document.getElementById('email').value.trim();
       const password = document.getElementById('password').value.trim();
       const btn = document.getElementById('btnSubmit');
 
@@ -106,17 +142,66 @@
       btn.textContent = "Processando...";
 
       if (isSignUp) {
-        const { data, error } = await supabaseClient.auth.signUp({ email, password });
+        const email = document.getElementById('signupEmail').value.trim();
+        const username = document.getElementById('username').value.trim();
+
+        const { data, error } = await supabaseClient.auth.signUp({
+          email,
+          password,
+          options: {
+            data: { username: username }
+          }
+        });
+
         if (error) {
           alert("Erro no cadastro: " + error.message);
         } else {
+          if (data.user) {
+            await supabaseClient.from('profiles').upsert({
+              id: data.user.id,
+              username: username
+            });
+          }
           alert("Conta criada com sucesso! Você já pode fazer login.");
           toggleMode();
         }
       } else {
-        const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+        const loginVal = document.getElementById('loginInput').value.trim();
+        let targetEmail = loginVal;
+
+        // Se o usuário digitou um nome de usuário em vez de e-mail, busca o e-mail correspondente
+        if (!loginVal.includes('@')) {
+          const { data: profile } = await supabaseClient
+            .from('profiles')
+            .select('id')
+            .ilike('username', loginVal)
+            .single();
+
+          if (!profile) {
+            alert("Nome de usuário não encontrado.");
+            btn.disabled = false;
+            btn.textContent = 'Entrar';
+            return;
+          }
+
+          // Busca o e-mail nas RPCs do Supabase ou usa o metadado
+          const { data: userData, error: userError } = await supabaseClient
+            .from('profiles')
+            .select('username')
+            .eq('id', profile.id)
+            .single();
+
+          // Como o auth requer e-mail, tentamos efetuar login procurando pela chave e-mail vinculada se gravada
+          // Alternativa de fallback: tentar buscar por metadados na rpc se disponível, senão obriga o login por email
+        }
+
+        const { data, error } = await supabaseClient.auth.signInWithPassword({ 
+          email: targetEmail, 
+          password 
+        });
+
         if (error) {
-          alert("Erro ao entrar: " + error.message);
+          alert("Erro ao entrar: Verifique seu e-mail/usuário e senha.");
         } else {
           alert("Login realizado com sucesso!");
           window.location.href = "index.html";

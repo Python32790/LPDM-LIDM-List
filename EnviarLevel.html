@@ -104,8 +104,22 @@
       const banner = document.getElementById('userStatusBanner');
       const text = document.getElementById('userStatusText');
       banner.style.display = 'flex';
+      
       if (session) {
-        text.innerHTML = `Logado como: <b>${session.user.email}</b>`;
+        // Busca o username nos metadados ou na tabela profiles
+        let username = session.user.user_metadata.username;
+
+        if (!username) {
+          const { data: profile } = await supabaseClient
+            .from('profiles')
+            .select('username')
+            .eq('id', session.user.id)
+            .single();
+            
+          if (profile && profile.username) username = profile.username;
+        }
+
+        text.innerHTML = `Logado como: <b>${username || session.user.email}</b>`;
       } else {
         text.innerHTML = `Modo Convidado (Envios permitidos)`;
       }
