@@ -120,7 +120,7 @@
               ` : `
                 ${isAdmin ? `
                   <input type="number" id="pos-${lvl.id}" class="pos-input" value="${lvl.position || 1}" min="1">
-                  <button class="btn-update" onclick="updatePosition('${lvl.id}')"><i class="fa-solid fa-arrows-up-down"></i> Alterar Posição</button>
+                  <button class="btn-update" onclick="updatePosition('${lvl.id}', ${lvl.position || 1}, '${lvl.list_type}')"><i class="fa-solid fa-arrows-up-down"></i> Alterar Posição</button>
                 ` : ''}
                 <button class="btn-delete" onclick="deleteLevel('${lvl.id}')"><i class="fa-solid fa-trash"></i> Remover</button>
               `}
@@ -165,18 +165,48 @@
       loadView('pending_levels');
     }
 
-    async function updatePosition(id) {
+    async function updatePosition(id, currentPos, listType) {
       if (currentUserRole !== 'admin') {
         alert("Apenas ADMINS podem alterar a posição de níveis já aprovados.");
         return;
       }
       const newPos = parseInt(document.getElementById(`pos-${id}`).value, 10);
-      const { error } = await supabaseClient.from('levels').update({ position: newPos }).eq('id', id);
+
+      if (isNaN(newPos) || newPos < 1) {
+        alert("Insira uma posição válida.");
+        return;
+      }
+
+      // Se a posição não mudou, não faz nada
+      if (newPos === currentPos) return;
+
+      // Busca se existe algum nível ocupando a posição de destino NA MESMA LISTA
+      const { data: existingLevel } = await supabaseClient
+        .from('levels')
+        .select('id')
+        .eq('position', newPos)
+        .eq('meow_status', 'approved')
+        .eq('list_type', listType)
+        .maybeSingle();
+
+      // Se existir, troca as posições entre os dois níveis dentro da mesma lista
+      if (existingLevel) {
+        await supabaseClient
+          .from('levels')
+          .update({ position: currentPos })
+          .eq('id', existingLevel.id);
+      }
+
+      // Atualiza o nível selecionado para a nova posição
+      const { error } = await supabaseClient
+        .from('levels')
+        .update({ position: newPos })
+        .eq('id', id);
       
       if (error) {
         alert("Erro ao atualizar posição: " + error.message);
       } else {
-        alert("Posição atualizada!");
+        alert("Posição atualizada com sucesso!");
         loadView('approved_levels');
       }
     }
