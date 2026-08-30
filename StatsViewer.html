@@ -7,26 +7,42 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    :root { --bg-color: #0b111e; --card-bg: #131c2e; --card-border: #1d2b45; --text-main: #e2e8f0; --accent-blue: #3b82f6; --accent-green: #22c55e; --text-muted: #8493a8; }
+    :root { 
+      --bg-color: #0b111e; 
+      --card-bg: #131c2e; 
+      --card-border: #1d2b45; 
+      --text-main: #e2e8f0; 
+      --accent-blue: #3b82f6; 
+      --text-muted: #8493a8; 
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
     body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+    
     header { width: 100%; max-width: 850px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid var(--card-border); padding-bottom: 15px; }
+    header h1 { font-size: 1.8rem; display: flex; align-items: center; gap: 8px; font-weight: bold; }
+    header a { color: var(--text-muted); text-decoration: none; font-size: 0.9rem; }
+
     .search-box { width: 100%; max-width: 850px; margin-bottom: 20px; }
-    .search-box input { width: 100%; padding: 12px; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 8px; color: #fff; font-size: 1rem; }
+    .search-box input { width: 100%; padding: 12px; background: #0b111e; border: 1px solid var(--card-border); border-radius: 8px; color: #fff; font-size: 0.95rem; outline: none; }
+    .search-box input:focus { border-color: var(--accent-blue); }
+
     .stats-container { width: 100%; max-width: 850px; display: flex; flex-direction: column; gap: 14px; }
     .player-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
-    .player-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--card-border); padding-bottom: 10px; }
-    .player-name { font-size: 1.2rem; font-weight: bold; color: var(--accent-blue); }
-    .records-list { list-style: none; display: flex; flex-direction: column; gap: 8px; margin-top: 6px; }
-    .record-item { background: #0b111e; border: 1px solid var(--card-border); padding: 10px 14px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; font-size: 0.9rem; flex-wrap: wrap; gap: 6px; }
-    .record-item a { color: var(--accent-blue); text-decoration: none; font-weight: bold; }
+    .player-header { display: flex; justify-content: space-between; align-items: center; }
+    .player-name { font-size: 1.15rem; font-weight: bold; color: var(--accent-blue); display: flex; align-items: center; gap: 8px; }
+    
+    .records-list { list-style: none; display: flex; flex-direction: column; gap: 8px; }
+    .record-item { background: #0b111e; border: 1px solid var(--card-border); padding: 12px 14px; border-radius: 6px; display: flex; flex-direction: column; gap: 6px; }
+    .record-info { font-size: 0.95rem; word-break: break-word; }
+    .record-details { color: var(--text-muted); font-size: 0.85rem; font-weight: normal; }
+    .record-link { color: var(--accent-blue); text-decoration: none; font-weight: bold; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 6px; margin-top: 2px; }
   </style>
 </head>
 <body>
 
   <header>
     <h1><i class="fa-solid fa-chart-simple"></i> Stats Viewer</h1>
-    <a href="index.html" style="color: var(--text-muted); text-decoration: none;">← Voltar ao Início</a>
+    <a href="index.html">← Voltar ao Início</a>
   </header>
 
   <div class="search-box">
@@ -49,7 +65,6 @@
     async function loadStats() {
       const container = document.getElementById('statsContainer');
 
-      // Busca records aprovados trazendo os detalhes do nível
       const { data: records, error } = await supabaseClient
         .from('records')
         .select('*, levels(name, creator, gd_id)')
@@ -60,7 +75,6 @@
         return;
       }
 
-      // Agrupa por jogador
       const playersMap = {};
       records.forEach(rec => {
         if (!playersMap[rec.player_name]) playersMap[rec.player_name] = [];
@@ -88,11 +102,13 @@
 
           recordsHtml += `
             <li class="record-item">
-              <div>
+              <div class="record-info">
                 <strong>${lvlName}${r.progress}%</strong> 
-                <span style="color:var(--text-muted); font-size:0.8rem;">(Criador: ${creator} \vert{} ID:${gdId})</span>
+                <span class="record-details">(Criador: ${creator} | ID:${gdId})</span>
               </div>
-              <a href="${r.video_url}" target="_blank"><i class="fa-solid fa-play"></i> Ver Prova</a>
+              <a href="${r.video_url}" target="_blank" class="record-link">
+                <i class="fa-solid fa-play"></i> Ver Prova
+              </a>
             </li>
           `;
         });
