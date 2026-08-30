@@ -3,35 +3,70 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Moderação de Records - Meow List</title>
+  <title>Enviar Record - Meow List</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
-    :root { --bg-color: #0b111e; --card-bg: #131c2e; --card-border: #1d2b45; --text-main: #e2e8f0; --accent-blue: #3b82f6; --text-muted: #8493a8; --green: #22c55e; --red: #ef4444; }
+    :root {
+      --bg-color: #0b111e;
+      --card-bg: #131c2e;
+      --card-border: #1d2b45;
+      --text-main: #e2e8f0;
+      --accent-blue: #3b82f6;
+      --accent-green: #22c55e;
+      --text-muted: #8493a8;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
-    body { background-color: var(--bg-color); color: var(--text-main); padding: 30px 20px; display: flex; flex-direction: column; align-items: center; }
-    .container { width: 100%; max-width: 800px; }
-    h1 { margin-bottom: 20px; font-size: 1.8rem; display: flex; align-items: center; gap: 10px; }
-    .record-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 18px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; gap: 15px; flex-wrap: wrap; }
-    .record-info h3 { font-size: 1.1rem; color: #fff; margin-bottom: 4px; }
-    .record-info p { color: var(--text-muted); font-size: 0.9rem; margin-bottom: 4px; }
-    .record-info a { color: var(--accent-blue); text-decoration: none; word-break: break-all; }
-    .actions { display: flex; gap: 10px; }
-    .btn { border: none; padding: 10px 16px; border-radius: 6px; font-weight: bold; cursor: pointer; color: #fff; display: flex; align-items: center; gap: 6px; }
-    .btn-approve { background-color: var(--green); }
-    .btn-approve:hover { background-color: #16a34a; }
-    .btn-reject { background-color: var(--red); }
-    .btn-reject:hover { background-color: #dc2626; }
-    .empty-msg { text-align: center; color: var(--text-muted); margin-top: 40px; font-size: 1.1rem; }
+    body { background-color: var(--bg-color); color: var(--text-main); min-height: 100vh; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .form-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 24px; width: 100%; max-width: 480px; box-shadow: 0 4px 20px rgba(0,0,0,0.3); }
+    h2 { margin-bottom: 8px; font-size: 1.4rem; color: #fff; text-align: center; }
+    p.subtitle { color: var(--text-muted); font-size: 0.85rem; text-align: center; margin-bottom: 20px; }
+    .form-group { margin-bottom: 16px; display: flex; flex-direction: column; gap: 6px; }
+    label { font-size: 0.85rem; color: var(--text-muted); font-weight: bold; }
+    input, select { background: #0b111e; border: 1px solid var(--card-border); color: #fff; padding: 12px; border-radius: 8px; font-size: 0.95rem; outline: none; }
+    input:focus, select:focus { border-color: var(--accent-blue); }
+    .btn-submit { background: var(--accent-green); color: #fff; font-weight: bold; border: none; padding: 12px; border-radius: 8px; cursor: pointer; width: 100%; margin-top: 10px; font-size: 1rem; display: flex; justify-content: center; align-items: center; gap: 8px; }
+    .btn-submit:hover { opacity: 0.9; }
+    .back-link { display: block; text-align: center; margin-top: 15px; color: var(--text-muted); text-decoration: none; font-size: 0.85rem; }
   </style>
 </head>
 <body>
 
-  <div class="container">
-    <h1><i class="fa-solid fa-user-shield" style="color: #3b82f6;"></i> Moderação de Records</h1>
-    <div id="recordsList">
-      <p class="empty-msg">Carregando pendências...</p>
-    </div>
+  <div class="form-card">
+    <h2><i class="fa-solid fa-trophy" style="color: var(--accent-blue);"></i> Enviar Record</h2>
+    <p class="subtitle">Submeta seu record/completion para validação na Meow List.</p>
+
+    <form id="recordForm">
+      <!-- 1. Level -->
+      <div class="form-group">
+        <label for="levelSelect">Level:</label>
+        <select id="levelSelect" required>
+          <option value="">Carregando levels da Meow List...</option>
+        </select>
+      </div>
+
+      <!-- 2. Nome do GD -->
+      <div class="form-group">
+        <label for="playerName">Nome Do GD:</label>
+        <input type="text" id="playerName" placeholder="Ex: ItsMeTennaGD" required>
+      </div>
+
+      <!-- 3. Porcentagem -->
+      <div class="form-group">
+        <label for="progress">Porcentagem:</label>
+        <input type="number" id="progress" min="1" max="100" placeholder="Ex: 100" required>
+      </div>
+
+      <!-- 4. Vídeo de Prova (Aceita qualquer link/plataforma) -->
+      <div class="form-group">
+        <label for="videoUrl">Vídeo De Prova:</label>
+        <input type="text" id="videoUrl" placeholder="Ex: https://youtu.be/... (YouTube, Medal, TikTok, IG, FB)" required>
+      </div>
+
+      <button type="submit" class="btn-submit"><i class="fa-solid fa-paper-plane"></i> Enviar Record</button>
+    </form>
+
+    <a href="index.html" class="back-link">← Voltar ao Início</a>
   </div>
 
   <script>
@@ -39,77 +74,83 @@
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNzcHN5emRvaGhwcnhvcmF1ZGFwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc0MjQ3NjEsImV4cCI6MjEwMzAwMDc2MX0.1uQOWMpovDiDFUIYbJ-1bovwc7OjGd4PauCm5U34dlE";
     const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    document.addEventListener('DOMContentLoaded', loadPendingRecords);
+    document.addEventListener('DOMContentLoaded', async () => {
+      await loadApprovedLevels();
+    });
 
-    async function loadPendingRecords() {
-      const container = document.getElementById('recordsList');
-      
-      const { data: records, error } = await supabaseClient
-        .from('records')
-        .select('id, player_name, progress, video_url, levels(name)')
-        .eq('status', 'pending')
-        .order('created_at', { ascending: true });
+    // Carrega a lista de níveis aprovados da Meow List
+    async function loadApprovedLevels() {
+      const select = document.getElementById('levelSelect');
+      const { data: levels, error } = await supabaseClient
+        .from('levels')
+        .select('id, name, list_type')
+        .eq('meow_status', 'approved')
+        .order('name');
 
-      if (error) {
-        container.innerHTML = `<p class="empty-msg">Erro ao carregar: ${error.message}</p>`;
+      if (error || !levels) {
+        select.innerHTML = '<option value="">Erro ao carregar níveis</option>';
         return;
       }
 
-      if (!records || records.length === 0) {
-        container.innerHTML = '<p class="empty-msg">Nenhum record pendente no momento!</p>';
-        return;
-      }
-
-      container.innerHTML = '';
-      records.forEach(rec => {
-        const levelName = rec.levels ? rec.levels.name : 'Nível Desconhecido';
-        
-        const card = document.createElement('div');
-        card.className = 'record-card';
-        card.id = `record-${rec.id}`;
-        card.innerHTML = `
-          <div class="record-info">
-            <h3>${rec.player_name} - ${rec.progress}% em ${levelName}</h3>
-            <p><strong>Vídeo:</strong> <a href="${rec.video_url}" target="_blank">${rec.video_url}</a></p>
-          </div>
-          <div class="actions">
-            <button type="button" class="btn btn-approve" onclick="atualizarStatus(event, '${rec.id}', 'approved')">
-              <i class="fa-solid fa-check"></i> Aprovar
-            </button>
-            <button type="button" class="btn btn-reject" onclick="atualizarStatus(event, '${rec.id}', 'rejected')">
-              <i class="fa-solid fa-xmark"></i> Rejeitar
-            </button>
-          </div>
-        `;
-        container.appendChild(card);
+      select.innerHTML = '<option value="">Selecione o Level...</option>';
+      levels.forEach(lvl => {
+        select.innerHTML += `<option value="${lvl.id}">${lvl.name} [${lvl.list_type}]</option>`;
       });
     }
 
-    async function atualizarStatus(event, recordId, novoStatus) {
-      if (event) event.preventDefault();
+    // Validação simples de URL para aceitar qualquer plataforma
+    function isValidUrl(string) {
+      try {
+        const url = new URL(string.startsWith('http') ? string : 'https://' + string);
+        return url.protocol === "http:" || url.protocol === "https:";
+      } catch (_) {
+        return false;
+      }
+    }
 
-      const btn = event.currentTarget;
-      btn.disabled = true;
+    // Processa o envio do formulário
+    document.getElementById('recordForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const levelId = document.getElementById('levelSelect').value;
+      const playerName = document.getElementById('playerName').value.trim();
+      const progress = parseInt(document.getElementById('progress').value, 10);
+      let videoUrl = document.getElementById('videoUrl').value.trim();
+
+      if (!levelId) {
+        alert("Por favor, selecione um level da lista.");
+        return;
+      }
+
+      if (!isValidUrl(videoUrl)) {
+        alert("Por favor, insira um link de vídeo válido.");
+        return;
+      }
+
+      // Adiciona https:// se o usuário esqueceu de digitar
+      if (!videoUrl.startsWith('http://') && !videoUrl.startsWith('https://')) {
+        videoUrl = 'https://' + videoUrl;
+      }
 
       const { error } = await supabaseClient
         .from('records')
-        .update({ status: novoStatus })
-        .eq('id', recordId);
+        .insert([
+          {
+            level_id: levelId,
+            player_name: playerName,
+            progress: progress,
+            video_url: videoUrl,
+            status: 'pending'
+          }
+        ]);
 
       if (error) {
-        alert("Erro ao atualizar o record: " + error.message);
-        btn.disabled = false;
+        alert("Erro ao enviar record: " + error.message);
       } else {
-        // Remove o card da tela de forma suave sem precisar recarregar a página inteira
-        const cardElement = document.getElementById(`record-${recordId}`);
-        if (cardElement) cardElement.remove();
-
-        const remaining = document.querySelectorAll('.record-card');
-        if (remaining.length === 0) {
-          document.getElementById('recordsList').innerHTML = '<p class="empty-msg">Nenhum record pendente no momento!</p>';
-        }
+        alert("Record enviado com sucesso! Aguarde a aprovação na moderação.");
+        document.getElementById('recordForm').reset();
       }
-    }
+    });
   </script>
 </body>
 </html>
